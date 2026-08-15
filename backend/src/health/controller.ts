@@ -7,11 +7,11 @@ interface DataRow {
 
 @Controller('health')
 export class HealthController {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly dbService: DatabaseService) {}
 
   @Get()
   async check() {
-    const res = await this.databaseService.query<DataRow>(
+    const res = await this.dbService.query<DataRow>(
       'SELECT 1 AS result',
     );
 
