@@ -1,7 +1,7 @@
-import { Body, Controller, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from "@nestjs/common";
 import { DatabaseService } from "../database/service";
 import { QueryResultRow } from "pg";
-import { ResponseStatusDTO } from "../dto/ResponseStatusDTO";
+import { ResponseStatusDTO } from "../dto/dtoModels";
 
 interface ResponseStatusModel extends QueryResultRow {
     id: number,
@@ -72,6 +72,26 @@ export class ResponseStatusController {
         const status = result.rows[0];
 
         if(!status) throw new NotFoundException(`Update resp ststus whith id = ${id} unavailable`);
+
+        return status;
+    };
+
+    @Delete(':id')
+    async deleteResponseStatus(@Param('id', ParseIntPipe) id: number): Promise<ResponseStatusModel> {
+        const result = await this.dbService.query<ResponseStatusModel>(
+            `DELETE FROM response_statuses
+            WHERE id = $1
+            RETURNING id, name
+            `, [id]
+        );
+
+        const status = result.rows[0];
+
+        if (!status) {
+            throw new NotFoundException(
+                `Problem status with id = ${id} not found`,
+            );
+        }
 
         return status;
     }
