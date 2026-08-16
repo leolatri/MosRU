@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from "@nestjs/common";
+import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from "@nestjs/common";
 import { DatabaseService } from "../database/service";
-import { QueryResultRow } from "pg";
+import { DatabaseError, QueryResultRow } from "pg";
 import { ResponseStatusDTO } from "../dto/dtoModels";
 
 interface ResponseStatusModel extends QueryResultRow {
@@ -35,22 +35,30 @@ export class ResponseStatusController {
 
         const status = result.rows[0];
 
-        if(!status) throw new NotFoundException(`Response status with id = ${id} not found`);
+        if (!status) throw new NotFoundException(`Response status with id = ${id} not found`);
 
         return status;
     };
 
     @Post()
     async createRespStatus(@Body() dto: ResponseStatusDTO): Promise<ResponseStatusModel> {
-        const result = await this.dbService.query<ResponseStatusModel>(
-            `
-            INSERT INTO response_statuses (name)
-            VALUES ($1)
-            RETURNING id, name
-            `, [dto.name]
-        );
+        try {
+            const result = await this.dbService.query<ResponseStatusModel>(
+                `
+                INSERT INTO response_statuses (name)
+                VALUES ($1)
+                RETURNING id, name
+                `, [dto.name]
+            );
 
-        return result.rows[0];
+            return result.rows[0];
+        } catch (error: unknown) {
+            if (error instanceof DatabaseError && error.code === '23505') {
+                throw new ConflictException(`Response status "${dto.name}" already exists`);
+            }
+            throw error;
+        }
+
     };
 
     @Patch(':id')
@@ -58,22 +66,31 @@ export class ResponseStatusController {
         @Body() dto: ResponseStatusDTO,
         @Param('id', ParseIntPipe) id: number,
     ): Promise<ResponseStatusModel> {
-        const result = await this.dbService.query<ResponseStatusModel>(
-            `
-            UPDATE response_statuses
-            SET
-                name = $1,
-                updated_at = NOW()
-            WHERE id = $2
-            RETURNING id, name
-            `, [dto.name, id]
-        );
+        try {
+            const result = await this.dbService.query<ResponseStatusModel>(
+                `
+                UPDATE response_statuses
+                SET
+                    name = $1,
+                    updated_at = NOW()
+                WHERE id = $2
+                RETURNING id, name
+                `, [dto.name, id]
+            );
 
-        const status = result.rows[0];
+            const status = result.rows[0];
 
-        if(!status) throw new NotFoundException(`Update resp ststus whith id = ${id} unavailable`);
+            if (!status) throw new NotFoundException(`Update resp ststus whith id = ${id} unavailable`);
 
-        return status;
+            return status;
+
+        } catch (error: unknown) {
+            if (error instanceof DatabaseError && error.code === '23505') {
+                throw new ConflictException(`Response status "${dto.name}" already exists`);
+            }
+            throw error;
+        }
+
     };
 
     @Delete(':id')

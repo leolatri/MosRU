@@ -34,7 +34,7 @@ export class ObjCategoriesController {
         );
         const object = result.rows[0];
 
-        if (!object) throw new NotFoundException(`Not found problem object by id = ${id}`);
+        if (!object) throw new NotFoundException(`Not found object category with id = ${id}`);
 
         return object;
     };
@@ -53,7 +53,7 @@ export class ObjCategoriesController {
             return result.rows[0];
         } catch (error: unknown) {
             if (error instanceof DatabaseError && error.code === '23505') {
-                throw new ConflictException(`Problem object "${dto.name}" already exists`);
+                throw new ConflictException(`Object category "${dto.name}" already exists`);
             }
             throw error;
         }
@@ -64,21 +64,29 @@ export class ObjCategoriesController {
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: ObjCategoriesDTO
     ): Promise<ObjCategoriesModel> {
-        const result = await this.dbService.query<ObjCategoriesModel>(
-            `UPDATE object_categories
-            SET
-                name = $1,
-                updated_at = NOW()
-            WHERE id = $2
-            RETURNING id, name
-            `, [dto.name, id]
-        );
+        try {
+            const result = await this.dbService.query<ObjCategoriesModel>(
+                `UPDATE object_categories
+                SET
+                    name = $1,
+                    updated_at = NOW()
+                WHERE id = $2
+                RETURNING id, name
+                `, [dto.name, id]
+            );
 
-        const object = result.rows[0];
+            const object = result.rows[0];
 
-        if (!object) throw new NotFoundException(`Cannot update problem object whith id = ${id}`);
+            if (!object) throw new NotFoundException(`Cannot update object category whith id = ${id}`);
 
-        return object;
+            return object;
+        } catch (error: unknown) {
+            if (error instanceof DatabaseError && error.code === '23505') {
+                throw new ConflictException(`Object category "${dto.name}" already exists`);
+            }
+            throw error;
+        }
+
     }
 
     @Delete(':id')
@@ -94,7 +102,7 @@ export class ObjCategoriesController {
 
         if (!object) {
             throw new NotFoundException(
-                `Problem object with id = ${id} not found`,
+                `Object category with id = ${id} not found`,
             );
         }
 

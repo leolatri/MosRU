@@ -64,21 +64,30 @@ export class ProblemTopicsController {
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: ProblemTopicDTO
     ): Promise<ProblemTopicModel> {
-        const result = await this.dbService.query<ProblemTopicModel>(
-            `UPDATE problem_topics
-            SET
-                name = $1,
-                updated_at = NOW()
-            WHERE id = $2
-            RETURNING id, name
-            `, [dto.name, id]
-        );
+        try {
+            const result = await this.dbService.query<ProblemTopicModel>(
+                `UPDATE problem_topics
+                SET
+                    name = $1,
+                    updated_at = NOW()
+                WHERE id = $2
+                RETURNING id, name
+                `, [dto.name, id]
+            );
 
-        const topic = result.rows[0];
+            const topic = result.rows[0];
 
-        if (!topic) throw new NotFoundException(`Cannot update problem topic whith id = ${id}`);
+            if (!topic) throw new NotFoundException(`Cannot update problem topic whith id = ${id}`);
 
-        return topic;
+            return topic;
+
+        } catch (error: unknown) {
+            if (error instanceof DatabaseError && error.code === '23505') {
+                throw new ConflictException(`Problem topic "${dto.name}" already exists`);
+            }
+            throw error;
+        }
+
     }
 
     @Delete(':id')
