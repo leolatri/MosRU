@@ -1,6 +1,6 @@
 import { Transform } from "class-transformer";
-import { IsNotEmpty, IsInt, IsString, Min } from "class-validator";
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsInt, IsString, Min, IsOptional, Matches, IsDateString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ResponseStatusDTO {
     @ApiProperty({
@@ -96,4 +96,95 @@ export class CategoryProblemTopicDTO {
     @IsNotEmpty()
     problemTopicId!: number;
 };
+
+export class ViolationDto {
+    @ApiProperty({
+        description: 'ID сообщения из исходного XLSX-файла',
+        example: 111550557,
+    })
+    @IsInt()
+    @Min(1)
+    sourceMessageId!: number;
+
+    @ApiProperty({
+        description: 'Номер заявки',
+        example: 21816578,
+    })
+    @IsInt()
+    @Min(1)
+    applicationNumber!: number;
+
+    @ApiProperty({
+        description: 'Дата публикации в формате YYYY-MM-DD',
+        example: '2026-08-16',
+        format: 'date',
+    })
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+        message: 'publicationDate must have YYYY-MM-DD format',
+    })
+    @IsDateString()
+    publicationDate!: string;
+
+    @ApiPropertyOptional({
+        description: 'ID района. Может отсутствовать',
+        example: 1,
+        nullable: true,
+    })
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    districtId?: number | null;
+
+    @ApiProperty({
+        description: 'Название или адрес объекта',
+        example: 'г. Москва, улица Тверская, дом 10',
+    })
+    @Transform(({ value }) =>
+        typeof value === 'string' ? value.trim() : value,
+    )
+    @IsString()
+    @IsNotEmpty()
+    objectName!: string;
+
+    @ApiProperty({
+        description: 'ID категории объекта',
+        example: 1,
+    })
+    @IsInt()
+    @Min(1)
+    objectCategoryId!: number;
+
+    @ApiProperty({
+        description: 'ID проблемной темы',
+        example: 1,
+    })
+    @IsInt()
+    @Min(1)
+    problemTopicId!: number;
+
+    @ApiPropertyOptional({
+        description:
+            'Регламентный срок подготовки ответа в формате YYYY-MM-DD',
+        example: '2026-08-20',
+        format: 'date',
+        nullable: true,
+    })
+    @IsOptional()
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+        message: 'responseDeadline must have YYYY-MM-DD format',
+    })
+    @IsDateString()
+    responseDeadline?: string | null;
+
+    @ApiProperty({
+        description: 'ID статуса подготовки ответа',
+        example: 1,
+    })
+    @IsInt()
+    @Min(1)
+    responseStatusId!: number;
+}
+
+
+
 
