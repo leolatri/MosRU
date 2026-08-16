@@ -4,6 +4,8 @@ import { HealthModule } from './health/module';
 import { ResponseStatusModule } from './responseStatus/module';
 import { ProblemTopicsModule } from './problemTopics/module';
 import { ObjCategoriesModule } from './objectCategories/module';
+import { DistrictModule } from './districts/module';
+import { AdmOkrugsModule } from './administrativeOkrugs/module';
 
 @Module({
   imports: [
@@ -11,7 +13,9 @@ import { ObjCategoriesModule } from './objectCategories/module';
     HealthModule,
     ResponseStatusModule,
     ProblemTopicsModule,
-    ObjCategoriesModule
+    ObjCategoriesModule,
+    AdmOkrugsModule,
+    DistrictModule
   ],
   controllers: [],
   providers: [],
