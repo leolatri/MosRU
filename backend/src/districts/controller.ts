@@ -16,7 +16,7 @@ export class DistrictsController {
     @Get()
     async getAll(): Promise<DistrictModel[]> {
         const result = await this.dbService.query<DistrictModel>(
-            `SELECT id, okrug_id, name
+            `SELECT id, okrug_id AS okrugId, name
             FROM districts
             ORDER BY id
             `
@@ -28,7 +28,7 @@ export class DistrictsController {
     @Get(':id')
     async getDistrictById(@Param('id', ParseIntPipe) id: number): Promise<DistrictModel> {
         const result = await this.dbService.query<DistrictModel>(
-            `SELECT id, okrug_id, name
+            `SELECT id, okrug_id AS okrugId, name
             FROM districts
             WHERE id = $1
             `, [id]
@@ -71,7 +71,7 @@ export class DistrictsController {
                     okrug_id = $2,
                     updated_at = NOW()
                 WHERE id = $3
-                RETURNING id, okrug_id, name
+                RETURNING id, okrug_id AS okrugId, name
                 `, [dto.name, dto.okrugId, id]
             );
 
@@ -91,7 +91,7 @@ export class DistrictsController {
         const result = await this.dbService.query<DistrictModel>(
             `DELETE FROM districts
             WHERE id = $1
-            RETURNING id, okrug_id, name
+            RETURNING id, okrug_id AS okrugId, name
             `, [id]
         );
 

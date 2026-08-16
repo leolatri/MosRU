@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsNotEmpty, IsInt, IsString, Min } from "class-validator";
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ResponseStatusDTO {
@@ -49,7 +49,8 @@ export class DistrictsDTO {
         description: 'ID округа',
         example: '1',
     })
-    @IsNumber()
+    @IsInt()
+    @Min(1)
     @IsNotEmpty()
     okrugId!: number;
 };
@@ -73,5 +74,26 @@ export class AdmOkrugsDTO {
     @IsString()
     @IsNotEmpty()
     code!: string;
+};
+
+
+export class CategoryProblemTopicDTO {
+    @ApiProperty({
+        description: 'ID Категории объекта',
+        example: '1',
+    })
+    @IsInt()
+    @Min(1)
+    @IsNotEmpty()
+    objectCategoryId!: number;
+
+    @ApiProperty({
+        description: 'ID Темы проблемы',
+        example: '1',
+    })
+    @IsInt()
+    @Min(1)
+    @IsNotEmpty()
+    problemTopicId!: number;
 };
 

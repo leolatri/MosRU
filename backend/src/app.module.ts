@@ -6,6 +6,7 @@ import { ProblemTopicsModule } from './problemTopics/module';
 import { ObjCategoriesModule } from './objectCategories/module';
 import { DistrictModule } from './districts/module';
 import { AdmOkrugsModule } from './administrativeOkrugs/module';
+import { CategoryProblemTopicModule } from './categoryProblemTopics/module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { AdmOkrugsModule } from './administrativeOkrugs/module';
     ProblemTopicsModule,
     ObjCategoriesModule,
     AdmOkrugsModule,
-    DistrictModule
+    DistrictModule,
+    CategoryProblemTopicModule
   ],
   controllers: [],
   providers: [],
