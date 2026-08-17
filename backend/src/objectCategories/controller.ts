@@ -2,12 +2,14 @@ import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Pa
 import { DatabaseError, QueryResultRow } from "pg";
 import { DatabaseService } from "../database/service";
 import { ObjCategoriesDTO } from "../dto/dtoModels";
+import { ApiBearerAuth } from "@nestjs/swagger";
 
 interface ObjCategoriesModel extends QueryResultRow {
     id: number,
     name: string
 }
 
+@ApiBearerAuth()
 @Controller('object-categories')
 export class ObjCategoriesController {
     constructor(private readonly dbService: DatabaseService) { }

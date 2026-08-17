@@ -2,12 +2,14 @@ import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Pa
 import { DatabaseService } from "../database/service";
 import { DatabaseError, QueryResultRow } from "pg";
 import { ResponseStatusDTO } from "../dto/dtoModels";
+import { ApiBearerAuth } from "@nestjs/swagger";
 
 interface ResponseStatusModel extends QueryResultRow {
     id: number,
     name: string,
 }
 
+@ApiBearerAuth()
 @Controller('response-statuses')
 export class ResponseStatusController {
     constructor(private readonly dbService: DatabaseService) { }

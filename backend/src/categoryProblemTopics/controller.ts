@@ -2,12 +2,14 @@ import { BadRequestException, Body, ConflictException, Controller, Delete, Get, 
 import { DatabaseError, QueryResultRow } from "pg";
 import { DatabaseService } from "../database/service";
 import { CategoryProblemTopicDTO } from "../dto/dtoModels";
+import { ApiBearerAuth } from "@nestjs/swagger";
 
 interface CategoryProblemTopicModel extends QueryResultRow {
     objectCategoryId: number,
     problemTopicId: number,
 }
 
+@ApiBearerAuth()
 @Controller('category-problem-topics')
 export class CategoryProblemTopicController {
     constructor(private readonly dbService: DatabaseService) { }

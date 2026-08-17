@@ -2,6 +2,7 @@ import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Pa
 import { DatabaseError, QueryResultRow } from "pg";
 import { DatabaseService } from "../database/service";
 import { AdmOkrugsDTO } from "../dto/dtoModels";
+import { ApiBearerAuth } from "@nestjs/swagger";
 
 interface AdmOkrugsModel extends QueryResultRow {
     id: number,
@@ -9,6 +10,7 @@ interface AdmOkrugsModel extends QueryResultRow {
     code: string,
 }
 
+@ApiBearerAuth()
 @Controller('administrative-okrugs')
 export class AdmOkrugsController {
     constructor(private readonly dbService: DatabaseService) { }

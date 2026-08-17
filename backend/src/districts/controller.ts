@@ -2,6 +2,7 @@ import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Pa
 import { DatabaseService } from "../database/service";
 import { DistrictsDTO } from "../dto/dtoModels";
 import { DatabaseError, QueryResultRow } from "pg";
+import { ApiBearerAuth } from "@nestjs/swagger";
 
 interface DistrictModel extends QueryResultRow {
     id: number,
@@ -9,6 +10,7 @@ interface DistrictModel extends QueryResultRow {
     name: string,
 }
 
+@ApiBearerAuth()
 @Controller('districts')
 export class DistrictsController {
     constructor(private readonly dbService: DatabaseService) { }
