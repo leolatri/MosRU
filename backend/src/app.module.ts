@@ -8,6 +8,7 @@ import { AdmOkrugsModule } from './administrativeOkrugs/module';
 import { CategoryProblemTopicModule } from './categoryProblemTopics/module';
 import { ViolationModule } from './violations/module';
 import { AuthModule } from './auth/module';
+import { ImportsModule } from './imports/module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { AuthModule } from './auth/module';
     DistrictModule,
     CategoryProblemTopicModule,
     ViolationModule,
-    AuthModule
+    AuthModule,
+    ImportsModule
   ],
   controllers: [],
   providers: [],

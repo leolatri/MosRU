@@ -30,7 +30,7 @@ interface CountRow extends QueryResultRow {
 };
 
 export interface PaginatedViolations {
-    items: ViolationModel[];
+    items: ViolationDetailsModel[];
     meta: {
         page: number;
         limit: number;
