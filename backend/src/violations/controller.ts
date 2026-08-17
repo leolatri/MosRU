@@ -1,7 +1,7 @@
 import { BadRequestException, Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from "@nestjs/common";
 import { DatabaseService } from "../database/service";
 import { DatabaseError, QueryResultRow } from "pg";
-import { ViolationDto } from "../dto/dtoModels";
+import { ViolationDTO } from "../dto/dtoModels";
 
 interface ViolationModel extends QueryResultRow {
     id: string,
@@ -70,7 +70,7 @@ export class ViolationsController {
 
     @Post()
     async createViolation(
-        @Body() dto: ViolationDto
+        @Body() dto: ViolationDTO
     ): Promise<ViolationModel> {
         try {
             const result = await this.dbService.query<ViolationModel>(
@@ -139,7 +139,7 @@ export class ViolationsController {
 
     @Patch()
     async updateiolation(
-        @Body() dto: ViolationDto,
+        @Body() dto: ViolationDTO,
         @Param('id', ParseIntPipe) id: number
     ): Promise<ViolationModel> {
         try {

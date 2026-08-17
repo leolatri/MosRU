@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsNotEmpty, IsInt, IsString, Min, IsOptional, Matches, IsDateString } from "class-validator";
+import { IsNotEmpty, IsInt, IsString, Min, IsOptional, Matches, IsDateString, IsEmail, MaxLength, MinLength } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ResponseStatusDTO {
@@ -97,7 +97,7 @@ export class CategoryProblemTopicDTO {
     problemTopicId!: number;
 };
 
-export class ViolationDto {
+export class ViolationDTO {
     @ApiProperty({
         description: 'ID сообщения из исходного XLSX-файла',
         example: 111550557,
@@ -183,6 +183,31 @@ export class ViolationDto {
     @IsInt()
     @Min(1)
     responseStatusId!: number;
+}
+
+export class UserDTO {
+    @ApiProperty({
+        description: 'Почта',
+        example: 'ex@gmail.com'
+    })
+    @Transform(({ value }) =>
+        typeof value === 'string'
+            ? value.trim().toLowerCase()
+            : value,
+    )
+    @IsEmail()
+    @MaxLength(254)
+    email!: string;
+
+    @ApiProperty({
+        description: 'Пароль',
+        example: '123456Al.',
+        minLength: 8
+    })
+    @IsString()
+    @MinLength(8)
+    password!: string;
+
 }
 
 
