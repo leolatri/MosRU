@@ -16,6 +16,15 @@ export interface ViolationModel extends QueryResultRow {
     responseStatusId: number;
 }
 
+export interface ViolationDetailsModel extends ViolationModel {
+    districtName: string | null;
+    administrativeOkrugId: number | null;
+    administrativeOkrugName: string | null;
+    objectCategoryName: string;
+    problemTopicName: string;
+    responseStatusName: string;
+}
+
 interface CountRow extends QueryResultRow {
     total: string;
 };
@@ -101,7 +110,7 @@ export class ViolationsService {
             offset,
         ];
 
-        const result = await this.dbService.query<ViolationModel>(
+        const result = await this.dbService.query<ViolationDetailsModel>(
             `
             SELECT
                 v.id AS id,
@@ -113,8 +122,29 @@ export class ViolationsService {
                 v.object_category_id AS "objectCategoryId",
                 v.problem_topic_id AS "problemTopicId",
                 v.response_deadline AS "responseDeadline",
-                v.response_status_id AS "responseStatusId"
+                v.response_status_id AS "responseStatusId",
+                d.name AS "districtName",
+                ao.id AS "administrativeOkrugId",
+                ao.name AS "administrativeOkrugName",
+                oc.name AS "objectCategoryName",
+                pt.name AS "problemTopicName",
+                rs.name AS "responseStatusName"
             FROM violations v
+
+            LEFT JOIN districts d
+            ON d.id = v.district_id
+
+            LEFT JOIN administrative_okrugs ao
+            ON ao.id = d.okrug_id
+
+            JOIN object_categories oc
+            ON oc.id = v.object_category_id
+
+            JOIN problem_topics pt
+            ON pt.id = v.problem_topic_id
+
+            JOIN response_statuses rs
+            ON rs.id = v.response_status_id
 
             ${whereSql}
 
@@ -139,30 +169,57 @@ export class ViolationsService {
         };
     }
 
-    async getViolationById(id: number): Promise<ViolationModel> {
-        const result = await this.dbService.query<ViolationModel>(
-            `SELECT
-                id,
-                source_message_id AS "sourceMessageId",
-                application_number AS "applicationNumber",
-                publication_date AS "publicationDate",
-                district_id AS "districtId",
-                object_name AS "objectName",
-                object_category_id AS "objectCategoryId",
-                problem_topic_id AS "problemTopicId",
-                response_deadline AS "responseDeadline",
-                response_status_id AS "responseStatusId"
-            FROM violations
-            WHERE id = $1
-                `, [id]
-        );
+    async getViolationById(id: number): Promise<ViolationDetailsModel> {
+        const result =
+            await this.dbService.query<ViolationDetailsModel>(
+                `
+                SELECT
+                    v.id,
+                    v.source_message_id AS "sourceMessageId",
+                    v.application_number AS "applicationNumber",
+                    v.publication_date AS "publicationDate",
+                    v.district_id AS "districtId",
+                    v.object_name AS "objectName",
+                    v.object_category_id AS "objectCategoryId",
+                    v.problem_topic_id AS "problemTopicId",
+                    v.response_deadline AS "responseDeadline",
+                    v.response_status_id AS "responseStatusId",
+
+                    d.name AS "districtName",
+                    ao.id AS "administrativeOkrugId",
+                    ao.name AS "administrativeOkrugName",
+                    oc.name AS "objectCategoryName",
+                    pt.name AS "problemTopicName",
+                    rs.name AS "responseStatusName"
+
+                FROM violations v
+
+                LEFT JOIN districts d
+                ON d.id = v.district_id
+
+                LEFT JOIN administrative_okrugs ao
+                ON ao.id = d.okrug_id
+
+                JOIN object_categories oc
+                ON oc.id = v.object_category_id
+
+                JOIN problem_topics pt
+                ON pt.id = v.problem_topic_id
+
+                JOIN response_statuses rs
+                ON rs.id = v.response_status_id
+
+                WHERE v.id = $1
+            `, [id]
+            );
 
         const violation = result.rows[0];
 
-        if (!violation) throw new NotFoundException(`Not found violation with id = ${id}`)
-
+        if (!violation) {
+            throw new NotFoundException(`Violation with id ${id} not found`);
+        }
         return violation;
-    };
+    }
 
     async createViolation(dto: ViolationDTO): Promise<ViolationModel> {
         try {
@@ -190,38 +247,33 @@ export class ViolationsService {
                         problem_topic_id AS "problemTopicId",
                         response_deadline AS "responseDeadline",
                         response_status_id AS "responseStatusId"
-                    `, [
-                dto.sourceMessageId,
-                dto.applicationNumber,
-                dto.publicationDate,
-                dto.districtId,
-                dto.objectName,
-                dto.objectCategoryId,
-                dto.problemTopicId,
-                dto.responseDeadline,
-                dto.responseStatusId
-            ]
+                    `,
+                [
+                    dto.sourceMessageId,
+                    dto.applicationNumber,
+                    dto.publicationDate,
+                    dto.districtId,
+                    dto.objectName,
+                    dto.objectCategoryId,
+                    dto.problemTopicId,
+                    dto.responseDeadline,
+                    dto.responseStatusId
+                ]
             );
 
             return result.rows[0];
         } catch (error: unknown) {
             if (error instanceof DatabaseError) {
                 if (error.code === '23505') {
-                    throw new ConflictException(
-                        'Violation with this source message ID or application number already exists',
-                    );
+                    throw new ConflictException('Violation with this source message ID or application number already exists');
                 }
 
                 if (error.code === '23503') {
-                    throw new BadRequestException(
-                        'District, response status or category-topic relation does not exist',
-                    );
+                    throw new BadRequestException('District, response status or category-topic relation does not exist');
                 }
 
                 if (error.code === '23514') {
-                    throw new BadRequestException(
-                        'Response deadline cannot be earlier than publication date',
-                    );
+                    throw new BadRequestException('Response deadline cannot be earlier than publication date');
                 }
             }
 
