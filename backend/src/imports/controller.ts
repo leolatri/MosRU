@@ -1,7 +1,8 @@
 import { BadRequestException, Controller, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
-import { ParsedXlsxResult, ImportsService } from "./service";
+import { ParsedXlsxResult } from "./models";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { ImportsService } from "./service";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const XLSX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
