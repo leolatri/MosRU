@@ -110,7 +110,7 @@ export class XlsxParserService {
                     errors.push({
                         row: 1,
                         field: `column ${columnNumber}`,
-                        message: `Ожидался заголовок ` + `"${expectedHeader}", получен ` + `"${actualHeader || 'пусто'}"`,
+                        message: `Ожидался заголовок ${expectedHeader}, получен "${actualHeader || 'пусто'}"`,
                     });
                 }
             },
@@ -126,7 +126,7 @@ export class XlsxParserService {
                 errors.push({
                     row: 1,
                     field: `column ${columnNumber}`,
-                    message: `Неожиданная дополнительная колонка ` + `"${extraHeader}"`,
+                    message: `Неожиданная дополнительная колонка ${extraHeader}"`,
                 });
             }
         }
@@ -175,7 +175,7 @@ export class XlsxParserService {
                     rowErrors.push({
                         row: rawRow.row,
                         field: 'sourceMessageId',
-                        message: `ID сообщения уже встречался ` + `в строке ${firstRow}`,
+                        message: `ID сообщения уже встречался в строке ${firstRow}`,
                     });
                 } else {
                     sourceMessageRows.set(sourceMessageId, rawRow.row);
@@ -195,7 +195,7 @@ export class XlsxParserService {
                     rowErrors.push({
                         row: rawRow.row,
                         field: 'applicationNumber',
-                        message: `Номер заявки уже встречался ` + `в строке ${firstRow}`,
+                        message: `Номер заявки уже встречался в строке ${firstRow}`,
                     });
                 } else {
                     applicationNumberRows.set(
