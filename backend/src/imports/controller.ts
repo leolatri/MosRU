@@ -1,6 +1,6 @@
 import { BadRequestException, Controller, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
-import { FileModel, ImportsService } from "./service";
+import { ParsedXlsxResult, ImportsService } from "./service";
 import { FileInterceptor } from "@nestjs/platform-express";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -37,7 +37,7 @@ export class ImportsController {
     @ApiBadRequestResponse({description: 'File is missing or has an invalid type'})
     @ApiUnauthorizedResponse({description: 'Bearer token is missing or invalid'})
     
-    uploadXlsx(@UploadedFile() file: Express.Multer.File | undefined): FileModel {
+    async uploadXlsx(@UploadedFile() file: Express.Multer.File | undefined): Promise<ParsedXlsxResult> {
         if (!file) {
             throw new BadRequestException('XLSX file is required');
         }
