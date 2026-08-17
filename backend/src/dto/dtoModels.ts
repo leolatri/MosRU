@@ -1,6 +1,6 @@
-import { Transform } from "class-transformer";
-import { IsNotEmpty, IsInt, IsString, Min, IsOptional, Matches, IsDateString, IsEmail, MaxLength, MinLength } from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from "class-transformer";
+import { IsNotEmpty, IsInt, IsString, Min, IsOptional, Matches, IsDateString, IsEmail, MaxLength, MinLength, IsIn, Max } from "class-validator";
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class ResponseStatusDTO {
     @ApiProperty({
@@ -183,6 +183,63 @@ export class ViolationDTO {
     @IsInt()
     @Min(1)
     responseStatusId!: number;
+}
+
+export class ViolationQueryDTO {
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    page: number = 1;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @Max(100)
+    limit: number = 20;
+
+    @IsOptional()
+    @IsIn([
+        'id',
+        'applicationNumber',
+        'publicationDate',
+        'responseDeadline',
+    ])
+    sortBy: string = 'id';
+
+    @IsOptional()
+    @IsIn(['asc', 'desc'])
+    sortOrder: 'asc' | 'desc' = 'desc';
+
+    @IsOptional()
+    @Type(() => Number)
+    @Min(1)
+    @IsInt()
+    districtId?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @Min(1)
+    @IsInt()
+    objectCategoryId?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @Min(1)
+    @IsInt()
+    problemTopicId?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @Min(1)
+    @IsInt()
+    responseStatusId?: number;
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(200)
+    search?: string;
 }
 
 export class UserDTO {
