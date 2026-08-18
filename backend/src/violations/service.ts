@@ -19,7 +19,7 @@ export interface ViolationModel extends QueryResultRow {
 export interface ViolationDetailsModel extends ViolationModel {
     districtName: string | null;
     administrativeOkrugId: number | null;
-    administrativeOkrugName: string | null;
+    administrativeOkrugCode: string | null;
     objectCategoryName: string;
     problemTopicName: string;
     responseStatusName: string;
@@ -125,7 +125,7 @@ export class ViolationsService {
                 v.response_status_id AS "responseStatusId",
                 d.name AS "districtName",
                 ao.id AS "administrativeOkrugId",
-                ao.name AS "administrativeOkrugName",
+                ao.code AS "administrativeOkrugCode",
                 oc.name AS "objectCategoryName",
                 pt.name AS "problemTopicName",
                 rs.name AS "responseStatusName"
@@ -187,7 +187,7 @@ export class ViolationsService {
 
                     d.name AS "districtName",
                     ao.id AS "administrativeOkrugId",
-                    ao.name AS "administrativeOkrugName",
+                    ao.code AS "administrativeOkrugCode",
                     oc.name AS "objectCategoryName",
                     pt.name AS "problemTopicName",
                     rs.name AS "responseStatusName"

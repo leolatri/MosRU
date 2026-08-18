@@ -2,14 +2,11 @@
 CREATE TABLE administrative_okrugs (
     id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code text NOT NULL,
-    name text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT current_timestamp,
     updated_at timestamptz NOT NULL DEFAULT current_timestamp,
 
     CONSTRAINT administrative_okrugs_code_unique UNIQUE (code),
-    CONSTRAINT administrative_okrugs_name_unique UNIQUE (name),
-    CONSTRAINT administrative_okrugs_code_not_blank CHECK (btrim(code) <> ''),
-    CONSTRAINT administrative_okrugs_name_not_blank CHECK (btrim(name) <> '')
+    CONSTRAINT administrative_okrugs_code_not_blank CHECK (btrim(code) <> '')
 );
 
 
