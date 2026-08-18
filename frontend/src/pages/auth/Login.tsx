@@ -2,8 +2,10 @@ import { Card, Typography } from "antd";
 import st from './style.module.scss';
 import AuthForm from "../../components/form/AuthForm";
 import type { FieldProps } from "../../models/models";
+import { useNavigate } from "react-router";
 
 const Login = () => {
+    const navigate = useNavigate();
     const fields: FieldProps[] = [
         {
             label: 'Почта',
@@ -39,7 +41,7 @@ const Login = () => {
                         }}
                         link={{
                             label: 'Зарегистрироваться',
-                            func: () => alert('Регистрация')
+                            func: () => navigate('/registration')
                         }}
                     />
                 </Typography.Text>
