@@ -12,7 +12,7 @@ import { ImportsModule } from './imports/module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../.env']}),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../.env'] }),
     ResponseStatusModule,
     ProblemTopicsModule,
     ObjCategoriesModule,
@@ -21,7 +21,7 @@ import { ImportsModule } from './imports/module';
     CategoryProblemTopicModule,
     ViolationModule,
     AuthModule,
-    ImportsModule
+    ImportsModule,
   ],
   controllers: [],
   providers: [],
