@@ -1,0 +1,44 @@
+.layout {
+  width: 100%;
+  min-height: 100dvh;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+
+    background-color: white;
+    border-radius: 10px;
+
+    padding-inline: 24px;
+  }
+
+  &__img {
+    flex-shrink: 0;
+  }
+
+  &__menu {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__content {
+    width: 100%;
+    padding: 24px;
+
+    background-color: #f3f5f7;
+  }
+}
+
+@media (max-width: 600px) {
+  .layout {
+    &__header {
+      gap: 12px;
+      padding-inline: 16px;
+    }
+
+    &__content {
+      padding: 16px;
+    }
+  }
+}
