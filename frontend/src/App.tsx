@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import './index.css';
+import Login from './pages/auth/Login';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-    </>
+    <div className='app'>
+      <Login/>
+    </div>
   )
 }
 

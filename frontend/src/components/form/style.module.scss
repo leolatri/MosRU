@@ -1,0 +1,13 @@
+@import '../../colors.scss';
+
+.authForm {
+    width: 100%;
+    height: auto;
+    min-height: 100px;
+
+    &__button {
+        background-color: $active-blue;
+        color: white;
+    }
+
+}
