@@ -1,3 +1,5 @@
+@import '../../colors.scss';
+
 .layout {
   width: 100%;
   min-height: 100dvh;
@@ -26,7 +28,7 @@
     width: 100%;
     padding: 24px;
 
-    background-color: #f3f5f7;
+    background-color: $background-color;
   }
 }
 
