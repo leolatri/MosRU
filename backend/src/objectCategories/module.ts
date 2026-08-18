@@ -1,10 +1,9 @@
-import { Module } from "@nestjs/common";
-import { DatabaseModule } from "../database/module";
-import { ObjCategoriesController } from "./controller";
+import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../database/module';
+import { ObjCategoriesController } from './controller';
 
 @Module({
-    imports: [DatabaseModule],
-    controllers: [ObjCategoriesController],
+  imports: [DatabaseModule],
+  controllers: [ObjCategoriesController],
 })
-
-export class ObjCategoriesModule {};
+export class ObjCategoriesModule {}
