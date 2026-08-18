@@ -1,117 +1,76 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { DatabaseService } from "../database/service";
-import { DatabaseError, QueryResultRow } from "pg";
-import { ViolationDTO, ViolationQueryDTO } from "../dto/dtoModels";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { DatabaseService } from '../database/service';
+import { DatabaseError, QueryResultRow } from 'pg';
+import { ViolationDTO, ViolationQueryDTO } from '../dto/dtoModels';
+import { buildViolationQuery } from './queryBuilder';
 
 export interface ViolationModel extends QueryResultRow {
-    id: string;
-    sourceMessageId: string;
-    applicationNumber: string;
-    publicationDate: string;
-    districtId: number | null;
-    objectName: string;
-    objectCategoryId: number;
-    problemTopicId: number;
-    responseDeadline: string | null;
-    responseStatusId: number;
+  id: string;
+  sourceMessageId: string;
+  applicationNumber: string;
+  publicationDate: string;
+  districtId: number | null;
+  objectName: string;
+  objectCategoryId: number;
+  problemTopicId: number;
+  responseDeadline: string | null;
+  responseStatusId: number;
 }
 
 export interface ViolationDetailsModel extends ViolationModel {
-    districtName: string | null;
-    administrativeOkrugId: number | null;
-    administrativeOkrugCode: string | null;
-    objectCategoryName: string;
-    problemTopicName: string;
-    responseStatusName: string;
+  districtName: string | null;
+  administrativeOkrugId: number | null;
+  administrativeOkrugCode: string | null;
+  objectCategoryName: string;
+  problemTopicName: string;
+  responseStatusName: string;
 }
 
 interface CountRow extends QueryResultRow {
-    total: string;
-};
+  total: string;
+}
 
 export interface PaginatedViolations {
-    items: ViolationDetailsModel[];
-    meta: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-    }
-};
-
+  items: ViolationDetailsModel[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
 
 @Injectable()
 export class ViolationsService {
-    constructor(private readonly dbService: DatabaseService) { }
+  constructor(private readonly dbService: DatabaseService) {}
 
-    async getAll(query: ViolationQueryDTO): Promise<PaginatedViolations> {
-        const page = query.page ?? 1;
-        const limit = query.limit ?? 20;
-        const offset = (page - 1) * limit;
+  async getAll(query: ViolationQueryDTO): Promise<PaginatedViolations> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const offset = (page - 1) * limit;
 
-        const search = query.search?.trim() || null;
+    const queryParts = buildViolationQuery(query);
 
-        const filterValues: unknown[] = [
-            query.districtId ?? null,
-            query.objectCategoryId ?? null,
-            query.problemTopicId ?? null,
-            query.responseStatusId ?? null,
-            search,
-        ];
-
-        const sortColumns: Record<string, string> = {
-            id: 'v.id',
-            applicationNumber: 'v.application_number',
-            publicationDate: 'v.publication_date',
-            responseDeadline: 'v.response_deadline',
-        };
-
-        const sortColumn = sortColumns[query.sortBy ?? 'id'] ?? 'v.id';
-        const sortOrder = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
-
-        const whereSql = `
-            WHERE
-                ($1::integer IS NULL OR v.district_id = $1)
-                AND ($2::integer IS NULL
-                    OR v.object_category_id = $2
-                )
-                AND (
-                    $3::integer IS NULL
-                    OR v.problem_topic_id = $3
-                )
-                AND (
-                    $4::integer IS NULL
-                    OR v.response_status_id = $4
-                )
-
-                AND (
-                    $5::text IS NULL
-                    OR v.object_name ILIKE '%' || $5 || '%'
-                    OR v.application_number::text
-                        ILIKE '%' || $5 || '%'
-                    OR v.source_message_id::text
-                        ILIKE '%' || $5 || '%'
-                )
-            `;
-
-        const countResult = await this.dbService.query<CountRow>(
-            `
+    const countResult = await this.dbService.query<CountRow>(
+      `
             SELECT COUNT(*) AS total
             FROM violations v
-            ${whereSql}
-            `, filterValues
-        );
+            ${queryParts.whereSql}
+            `,
+      queryParts.values,
+    );
 
-        const total = Number(countResult.rows[0].total);
+    const total = Number(countResult.rows[0].total);
 
-        const dataValues: unknown[] = [
-            ...filterValues,
-            limit,
-            offset,
-        ];
+    const dataValues: unknown[] = [...queryParts.values, limit, offset];
 
-        const result = await this.dbService.query<ViolationDetailsModel>(
-            `
+    const result = await this.dbService.query<ViolationDetailsModel>(
+      `
             SELECT
                 v.id AS id,
                 v.source_message_id AS "sourceMessageId",
@@ -146,33 +105,33 @@ export class ViolationsService {
             JOIN response_statuses rs
             ON rs.id = v.response_status_id
 
-            ${whereSql}
+            ${queryParts.whereSql}
 
             ORDER BY
-                ${sortColumn} ${sortOrder} NULLS LAST,
+                ${queryParts.orderBySql} NULLS LAST,
                 v.id ASC
 
             LIMIT $6
             OFFSET $7
-            `, dataValues
-        );
+            `,
+      dataValues,
+    );
 
-        return {
-            items: result.rows,
+    return {
+      items: result.rows,
 
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
-    }
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 
-    async getViolationById(id: number): Promise<ViolationDetailsModel> {
-        const result =
-            await this.dbService.query<ViolationDetailsModel>(
-                `
+  async getViolationById(id: number): Promise<ViolationDetailsModel> {
+    const result = await this.dbService.query<ViolationDetailsModel>(
+      `
                 SELECT
                     v.id,
                     v.source_message_id AS "sourceMessageId",
@@ -210,21 +169,22 @@ export class ViolationsService {
                 ON rs.id = v.response_status_id
 
                 WHERE v.id = $1
-            `, [id]
-            );
+            `,
+      [id],
+    );
 
-        const violation = result.rows[0];
+    const violation = result.rows[0];
 
-        if (!violation) {
-            throw new NotFoundException(`Violation with id ${id} not found`);
-        }
-        return violation;
+    if (!violation) {
+      throw new NotFoundException(`Violation with id ${id} not found`);
     }
+    return violation;
+  }
 
-    async createViolation(dto: ViolationDTO): Promise<ViolationModel> {
-        try {
-            const result = await this.dbService.query<ViolationModel>(
-                `INSERT INTO violations (
+  async createViolation(dto: ViolationDTO): Promise<ViolationModel> {
+    try {
+      const result = await this.dbService.query<ViolationModel>(
+        `INSERT INTO violations (
                         source_message_id,
                         application_number,
                         publication_date,
@@ -248,44 +208,52 @@ export class ViolationsService {
                         response_deadline AS "responseDeadline",
                         response_status_id AS "responseStatusId"
                     `,
-                [
-                    dto.sourceMessageId,
-                    dto.applicationNumber,
-                    dto.publicationDate,
-                    dto.districtId,
-                    dto.objectName,
-                    dto.objectCategoryId,
-                    dto.problemTopicId,
-                    dto.responseDeadline,
-                    dto.responseStatusId
-                ]
-            );
+        [
+          dto.sourceMessageId,
+          dto.applicationNumber,
+          dto.publicationDate,
+          dto.districtId,
+          dto.objectName,
+          dto.objectCategoryId,
+          dto.problemTopicId,
+          dto.responseDeadline,
+          dto.responseStatusId,
+        ],
+      );
 
-            return result.rows[0];
-        } catch (error: unknown) {
-            if (error instanceof DatabaseError) {
-                if (error.code === '23505') {
-                    throw new ConflictException('Violation with this source message ID or application number already exists');
-                }
-
-                if (error.code === '23503') {
-                    throw new BadRequestException('District, response status or category-topic relation does not exist');
-                }
-
-                if (error.code === '23514') {
-                    throw new BadRequestException('Response deadline cannot be earlier than publication date');
-                }
-            }
-
-            throw error;
+      return result.rows[0];
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError) {
+        if (error.code === '23505') {
+          throw new ConflictException(
+            'Violation with this source message ID or application number already exists',
+          );
         }
 
-    };
+        if (error.code === '23503') {
+          throw new BadRequestException(
+            'District, response status or category-topic relation does not exist',
+          );
+        }
 
-    async updateViolation(dto: ViolationDTO, id: number): Promise<ViolationModel> {
-        try {
-            const result = await this.dbService.query<ViolationModel>(
-                `UPDATE violations 
+        if (error.code === '23514') {
+          throw new BadRequestException(
+            'Response deadline cannot be earlier than publication date',
+          );
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async updateViolation(
+    dto: ViolationDTO,
+    id: number,
+  ): Promise<ViolationModel> {
+    try {
+      const result = await this.dbService.query<ViolationModel>(
+        `UPDATE violations 
                     SET 
                         source_message_id = $1,
                         application_number = $2,
@@ -310,35 +278,36 @@ export class ViolationsService {
                         response_deadline AS "responseDeadline",
                         response_status_id AS "responseStatusId"
                     `,
-                [
-                    dto.sourceMessageId,
-                    dto.applicationNumber,
-                    dto.publicationDate,
-                    dto.districtId,
-                    dto.objectName,
-                    dto.objectCategoryId,
-                    dto.problemTopicId,
-                    dto.responseDeadline,
-                    dto.responseStatusId,
-                    id
-                ]
-            );
+        [
+          dto.sourceMessageId,
+          dto.applicationNumber,
+          dto.publicationDate,
+          dto.districtId,
+          dto.objectName,
+          dto.objectCategoryId,
+          dto.problemTopicId,
+          dto.responseDeadline,
+          dto.responseStatusId,
+          id,
+        ],
+      );
 
-            const violation = result.rows[0];
+      const violation = result.rows[0];
 
-            if (!violation) throw new NotFoundException(`Not found violation with id = ${id}`)
+      if (!violation)
+        throw new NotFoundException(`Not found violation with id = ${id}`);
 
-            return result.rows[0];
-        } catch (error: unknown) {
-            if (error instanceof DatabaseError && error.code === '23505') throw new ConflictException(`Violation already exist`);
-            throw error;
-        }
+      return result.rows[0];
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError && error.code === '23505')
+        throw new ConflictException(`Violation already exist`);
+      throw error;
+    }
+  }
 
-    };
-
-    async deleteViolation(id: number): Promise<ViolationModel> {
-        const result = await this.dbService.query<ViolationModel>(
-            `DELETE FROM violations
+  async deleteViolation(id: number): Promise<ViolationModel> {
+    const result = await this.dbService.query<ViolationModel>(
+      `DELETE FROM violations
             WHERE id = $1
             RETURNING 
                 id,
@@ -351,13 +320,15 @@ export class ViolationsService {
                 problem_topic_id AS "problemTopicId",
                 response_deadline AS "responseDeadline",
                 response_status_id AS "responseStatusId"
-            `, [id]
-        );
+            `,
+      [id],
+    );
 
-        const violation = result.rows[0];
+    const violation = result.rows[0];
 
-        if (!violation) throw new NotFoundException(`Not found violation with id = ${id}`)
+    if (!violation)
+      throw new NotFoundException(`Not found violation with id = ${id}`);
 
-        return violation;
-    };
+    return violation;
+  }
 }
