@@ -19,7 +19,7 @@ export type ViolationSortBy =
 export type SortOrder = 'asc' | 'desc';
 
 export interface ViolationModel {
-    id: number;
+    id: string;
     sourceMessageId: string;
     applicationNumber: string;
     publicationDate: string;

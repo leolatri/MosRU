@@ -1,33 +1,69 @@
-import { Alert, Button, Table, Upload } from "antd"
-import useViolations from "../../hooks/useViolations";
-import { memo, useState } from "react";
-import { exportViolationsXlsx, importViolationsXlsx } from "../../service/api";
+import { Alert, Button, Table, Upload, message } from 'antd';
 import {
     DownloadOutlined,
+    PlusOutlined,
     UploadOutlined,
 } from '@ant-design/icons';
-import type { ViolationFilterValues, ViolationModel } from "../../models/models";
-import { columns } from "./columns";
+import { memo, useState } from 'react';
+import Filters from '../../components/filter/Filters';
+import ViolationFormModal from '../../components/violationForm/ViolationFormModal';
+import useFilters from '../../hooks/useFilters';
+import useViolations from '../../hooks/useViolations';
+import type { ViolationPayload } from '../../models/dto';
+import type {
+    ViolationFilterValues,
+    ViolationModel,
+} from '../../models/models';
+import {
+    createViolation,
+    deleteViolation,
+    exportViolationsXlsx,
+    importViolationsXlsx,
+    updateViolation,
+} from '../../service/api';
+import { columns } from './columns';
 import st from './style.module.scss';
-import useFilters from "../../hooks/useFilters";
-import Filters from "../../components/filter/Filters";
 
 const Violations = () => {
-    const { violations, meta, query, loading, error, setQuery, refetch } = useViolations();
-    const { options, loading: loadFilters, errors: errorsFilters } = useFilters();
+    const {
+        violations,
+        meta,
+        query,
+        loading,
+        error,
+        setQuery,
+        refetch,
+    } = useViolations();
+    const {
+        options,
+        loading: loadFilters,
+        errors: errorsFilters,
+    } = useFilters();
+
+    const [messageApi, messageContextHolder] = message.useMessage();
     const [imported, setImport] = useState(false);
     const [exported, setExport] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
+    const [selectedViolation, setSelectedViolation] =
+        useState<ViolationModel | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [mutationError, setMutationError] = useState<string | null>(null);
 
     const handleImport = async (file: File) => {
         setImport(true);
+
         try {
             await importViolationsXlsx(file);
-            alert('Файл импортирован');
-
+            void messageApi.success('Файл успешно импортирован');
             refetch();
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Не удалось импортировать файл';
-            alert(message);
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : 'Не удалось импортировать файл';
+
+            void messageApi.error(message);
         } finally {
             setImport(false);
         }
@@ -38,9 +74,14 @@ const Violations = () => {
 
         try {
             await exportViolationsXlsx(query);
+            void messageApi.success('Экспорт начался');
         } catch (exportError: unknown) {
-            const message = exportError instanceof Error ? exportError.message : 'Не удалось экспортировать файл';
-            alert(message);
+            const message =
+                exportError instanceof Error
+                    ? exportError.message
+                    : 'Не удалось экспортировать файл';
+
+            void messageApi.error(message);
         } finally {
             setExport(false);
         }
@@ -54,7 +95,7 @@ const Violations = () => {
             districtId: values.districtId,
             objectCategoryId: values.objectCategoryId,
             problemTopicId: values.problemTopicId,
-            responseStatusId: values.responseStatusId
+            responseStatusId: values.responseStatusId,
         }));
     };
 
@@ -67,9 +108,116 @@ const Violations = () => {
         }));
     };
 
+    const handleOpenCreate = () => {
+        setSelectedViolation(null);
+        setMutationError(null);
+        setFormOpen(true);
+    };
+
+    const handleOpenEdit = (violation: ViolationModel) => {
+        setSelectedViolation(violation);
+        setMutationError(null);
+        setFormOpen(true);
+    };
+
+    const handleCloseForm = () => {
+        if (saving) return;
+
+        setFormOpen(false);
+        setSelectedViolation(null);
+        setMutationError(null);
+    };
+
+    const handleSubmit = async (payload: ViolationPayload) => {
+        setSaving(true);
+        setMutationError(null);
+
+        try {
+            if (selectedViolation) {
+                await updateViolation(selectedViolation.id, payload);
+                void messageApi.success('Нарушение обновлено');
+            } else {
+                await createViolation(payload);
+                void messageApi.success('Нарушение создано');
+            }
+
+            const wasCreating = selectedViolation === null;
+
+            setFormOpen(false);
+            setSelectedViolation(null);
+
+            if (wasCreating && meta.page > 1) {
+                setQuery((currentQuery) => ({
+                    ...currentQuery,
+                    page: 1,
+                }));
+            } else {
+                refetch();
+            }
+        } catch (requestError: unknown) {
+            const errorMessage =
+                requestError instanceof Error
+                    ? requestError.message
+                    : 'Не удалось сохранить нарушение';
+
+            setMutationError(errorMessage);
+            void messageApi.error(errorMessage);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        setDeletingId(id);
+        setMutationError(null);
+
+        try {
+            await deleteViolation(id);
+            void messageApi.success('Нарушение удалено');
+
+            if (violations.length === 1 && meta.page > 1) {
+                setQuery((currentQuery) => ({
+                    ...currentQuery,
+                    page: meta.page - 1,
+                }));
+            } else {
+                refetch();
+            }
+        } catch (requestError: unknown) {
+            const errorMessage =
+                requestError instanceof Error
+                    ? requestError.message
+                    : 'Не удалось удалить нарушение';
+
+            setMutationError(errorMessage);
+            void messageApi.error(errorMessage);
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const tableColumns = columns({
+        deletingId,
+        onEdit: handleOpenEdit,
+        onDelete: (id) => void handleDelete(id),
+    });
+
     return (
         <div className={st.violations}>
-            <h1>Нарушения</h1>
+            {messageContextHolder}
+
+            <div className={st.violations__heading}>
+                <h1>Нарушения</h1>
+
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleOpenCreate}
+                >
+                    Создать нарушение
+                </Button>
+            </div>
+
             <div className={st.violations__buttons}>
                 <Upload
                     accept=".xlsx"
@@ -97,6 +245,7 @@ const Violations = () => {
                     Экспорт XLSX
                 </Button>
             </div>
+
             <Filters
                 options={options}
                 optionsLoading={loadFilters}
@@ -110,15 +259,17 @@ const Violations = () => {
                 onApply={handleApply}
                 onReset={handleReset}
             />
+
             {error && (
                 <Alert
                     type="error"
-                    title="Ошибка загрузки"
+                    title="Ошибка загрузки нарушений"
                     description={error}
                     showIcon
                 />
             )}
-            {error && (
+
+            {errorsFilters && (
                 <Alert
                     type="error"
                     title="Ошибка загрузки фильтров"
@@ -126,20 +277,33 @@ const Violations = () => {
                     showIcon
                 />
             )}
+
+            {mutationError && (
+                <Alert
+                    type="error"
+                    title="Ошибка операции"
+                    description={mutationError}
+                    closable
+                    onClose={() => setMutationError(null)}
+                    showIcon
+                />
+            )}
+
             <div className={st.violations__table}>
                 <Table<ViolationModel>
                     rowKey="id"
-                    columns={columns}
+                    columns={tableColumns}
                     dataSource={violations}
                     loading={loading}
-                    scroll={{ x: 1800 }}
+                    scroll={{ x: 2000 }}
                     pagination={{
                         current: meta.page,
                         pageSize: meta.limit,
                         total: meta.total,
                         showSizeChanger: true,
                         pageSizeOptions: [10, 20, 50, 100],
-                        showTotal: (total) => `Всего записей: ${total}`,
+                        showTotal: (total) =>
+                            `Всего записей: ${total}`,
                         onChange: (page, limit) => {
                             setQuery((currentQuery) => ({
                                 ...currentQuery,
@@ -151,10 +315,17 @@ const Violations = () => {
                 />
             </div>
 
+            <ViolationFormModal
+                open={formOpen}
+                violation={selectedViolation}
+                options={options}
+                optionsLoading={loadFilters}
+                submitting={saving}
+                onCancel={handleCloseForm}
+                onSubmit={handleSubmit}
+            />
         </div>
     );
 };
-
-
 
 export default memo(Violations);

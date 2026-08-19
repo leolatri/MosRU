@@ -10,9 +10,15 @@
         font-size: 2rem;
     }
 
+    &__heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
     &__buttons {
         display: flex;
-        flex-flow: row nowrap;
+        flex-flow: row wrap;
         gap: 20px;
     }
 
@@ -26,6 +32,14 @@
     .violations {
         gap: 16px;
 
+        &__heading {
+            align-items: stretch;
+            flex-direction: column;
+
+            :global(.ant-btn) {
+                width: 100%;
+            }
+        }
         &__buttons {
             flex-direction: column;
 

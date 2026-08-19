@@ -1,4 +1,5 @@
-import type { AuthModel, DashboardResponse, DistrictReference, ImportResult, ImportRowError, LoginResponce, NamedReference, PaginatedViolations, RegistrationResponse, ViolationFilterOptions, ViolationFilterValues, ViolationsQuery } from "../models/models";
+import type { AuthModel, DashboardResponse, DistrictReference, ImportResult, ImportRowError, LoginResponce, NamedReference, PaginatedViolations, RegistrationResponse, ViolationFilterOptions, ViolationFilterValues, ViolationModel, ViolationsQuery } from "../models/models";
+import type { ViolationPayload } from '../models/dto';
 
 export const ACCESS_TOKEN_KEY = 'accessToken';
 
@@ -151,6 +152,55 @@ export async function getViolations(
 
     return response.json() as Promise<PaginatedViolations>;
 };
+
+export async function getViolationById(
+    id: string,
+    signal?: AbortSignal,
+): Promise<ViolationModel> {
+    return getWithAuth<ViolationModel>(
+        `/violations/${encodeURIComponent(id)}`,
+        signal,
+    );
+}
+
+export async function createViolation(
+    payload: ViolationPayload,
+): Promise<void> {
+    await requestWithAuth('/violations', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function updateViolation(
+    id: string,
+    payload: ViolationPayload,
+): Promise<void> {
+    await requestWithAuth(
+        `/violations/${encodeURIComponent(id)}`,
+        {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        },
+    );
+}
+
+export async function deleteViolation(
+    id: string,
+): Promise<void> {
+    await requestWithAuth(
+        `/violations/${encodeURIComponent(id)}`,
+        {
+            method: 'DELETE',
+        },
+    );
+}
 
 export async function getDashboard(
     filters: ViolationFilterValues,
