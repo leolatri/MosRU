@@ -25,16 +25,6 @@ select {
 
 .app {
     min-height: 100dvh;
-    place-items: center;
-    display: grid;
-
-    padding: 24px;
-
     background-color: #f3f5f7;
 }
 
-@media (max-width: 480px) {
-    .app {
-        padding: 16px;
-    }
-}

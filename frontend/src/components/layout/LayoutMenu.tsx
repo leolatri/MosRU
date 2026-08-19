@@ -25,7 +25,6 @@ const LayoutMenu = () => {
                     mode="horizontal"
                     selectedKeys={[location.pathname]}
                     items={menuItems}
-                    style={{ lineHeight: '64px' }}
                 />
             </Header>
             <Content className={st.layout__content}>

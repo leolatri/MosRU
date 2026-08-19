@@ -5,6 +5,10 @@
   min-height: 100dvh;
 
   &__header {
+    width: 100%;
+    height: auto;
+    min-height: 64px;
+    
     display: flex;
     align-items: center;
     gap: 24px;
@@ -12,7 +16,7 @@
     background-color: white;
     border-radius: 10px;
 
-    padding-inline: 24px;
+    padding-inline: clamp(16px, 3vw, 32px);
   }
 
   &__img {
@@ -22,11 +26,12 @@
   &__menu {
     flex: 1;
     min-width: 0;
+    border-bottom: none;
   }
 
   &__content {
     width: 100%;
-    padding: 24px;
+    padding: clamp(12px, 2.5vw, 24px);
 
     background-color: $background-color;
   }
@@ -35,12 +40,16 @@
 @media (max-width: 600px) {
   .layout {
     &__header {
-      gap: 12px;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+
+      padding-block: 0px;
       padding-inline: 16px;
     }
 
-    &__content {
-      padding: 16px;
+    &__menu {
+      flex: 1 0 100%;
+      order: 2;
     }
   }
 }
