@@ -9,6 +9,7 @@ import { CategoryProblemTopicModule } from './categoryProblemTopics/module';
 import { ViolationModule } from './violations/module';
 import { AuthModule } from './auth/module';
 import { ImportsModule } from './imports/module';
+import { DashboardModule } from './dashboard/module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ImportsModule } from './imports/module';
     ViolationModule,
     AuthModule,
     ImportsModule,
+    DashboardModule
   ],
   controllers: [],
   providers: [],
