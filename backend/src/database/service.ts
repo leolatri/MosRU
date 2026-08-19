@@ -1,12 +1,16 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow, types } from 'pg';
+
+const POSTGRES_DATE_OID = 1082;
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
   private readonly pool: Pool;
 
   constructor(private readonly configService: ConfigService) {
+    types.setTypeParser(POSTGRES_DATE_OID, (value: string) => value);
+
     this.pool = new Pool({
       connectionString: this.configService.getOrThrow<string>('DATABASE_URL'),
     });
