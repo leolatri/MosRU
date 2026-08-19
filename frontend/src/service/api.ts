@@ -158,7 +158,7 @@ export async function getDashboard(
 ): Promise<DashboardResponse> {
     const serchParam = createSearchParams(filters);
 
-    const responce = await requestWithAuth(`/dashboard${serchParam.toString()}`, {signal});
+    const responce = await requestWithAuth(`/dashboard?${serchParam.toString()}`, {signal});
     return responce.json() as Promise<DashboardResponse>;
 };
 

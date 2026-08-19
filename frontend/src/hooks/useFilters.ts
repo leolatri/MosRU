@@ -22,10 +22,13 @@ const useFilters = () => {
                 const result = await getViolationFilterOptions(abortController.signal);
                 setOptions(result);
             } catch (err: unknown) {
+                if (abortController.signal.aborted) return;
+        
                 const message = err instanceof Error ? err.message : 'Не удалось загрузить фильтры';
                 setErrors(message);
             } finally {
-                setLoading(false);
+                if (!abortController.signal.aborted) setLoading(false);
+        
             }
         }
 

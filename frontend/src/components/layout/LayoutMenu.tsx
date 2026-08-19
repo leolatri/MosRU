@@ -6,6 +6,7 @@ import { Outlet, useNavigate } from 'react-router';
 import type { MenuProps } from 'antd/lib/menu';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Content, Header } from "antd/es/layout/layout";
+import { removeAccessToken } from '../../service/api';
 
 const LayoutMenu = () => {
     const navigate = useNavigate();
@@ -16,6 +17,7 @@ const LayoutMenu = () => {
 
     const handleExit = () => {
         navigate('/login');
+        removeAccessToken();
     };
 
     return (
@@ -38,6 +40,7 @@ const LayoutMenu = () => {
                     mode="horizontal"
                     selectedKeys={[location.pathname]}
                     items={menuItems}
+                    onClick={({ key }) => navigate(key)}
                 />
             </Header>
             <Content className={st.layout__content}>

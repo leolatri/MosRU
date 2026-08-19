@@ -36,7 +36,7 @@ const useViolations = (initQuery: ViolationsQuery = {}) => {
     useEffect(() => {
         const abortController = new AbortController();
 
-        async function loadViolations() {
+        const loadViolations = async() => {
             setLoading(true);
             setError(null);
 

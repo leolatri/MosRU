@@ -10,7 +10,7 @@ import type { ViolationFilterValues, ViolationModel } from "../../models/models"
 import { columns } from "./columns";
 import st from './style.module.scss';
 import useFilters from "../../hooks/useFilters";
-import Filters from "./Filters";
+import Filters from "../../components/filter/Filters";
 
 const Violations = () => {
     const { violations, meta, query, loading, error, setQuery, refetch } = useViolations();

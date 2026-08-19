@@ -22,14 +22,17 @@ const useDashboard = () => {
 
         const loadingDashboard = async () => {
             setLoading(true);
+            setErrors(null);
             try {
                 const responce = await getDashboard(filters, abortController.signal);
                 setData(responce);
             } catch (err: unknown) {
+                if (abortController.signal.aborted) return;
+
                 const message = err instanceof Error ? err.message : 'Не удалось загрузить дашборд';
                 setErrors(message);
             } finally {
-                setLoading(false);
+                if (!abortController.signal.aborted) setLoading(false);
             }
         }
 
