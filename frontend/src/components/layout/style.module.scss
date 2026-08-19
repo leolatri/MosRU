@@ -11,6 +11,7 @@
     
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 24px;
 
     background-color: white;
@@ -34,6 +35,13 @@
     padding: clamp(12px, 2.5vw, 24px);
 
     background-color: $background-color;
+  }
+
+  &__block {
+    display: flex;
+    gap: 20px;
+    flex-flow: row nowrap;
+    align-items: center;
   }
 }
 
