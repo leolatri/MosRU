@@ -5,6 +5,7 @@ import Registration from './pages/auth/Registration';
 import NotFoundPage from './pages/notFound/NotFoundPage';
 import Violations from './pages/violations/Violations';
 import LayoutMenu from './components/layout/LayoutMenu';
+import Dashboard from './pages/dashboard/Dashboard';
 
 function App() {
   return (
@@ -26,6 +27,10 @@ function App() {
           <Route
             path='/violations'
             element={<Violations />}
+          />
+          <Route
+            path='/dashboard'
+            element={<Dashboard />}
           />
         </Route>
 
