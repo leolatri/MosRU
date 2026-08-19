@@ -103,9 +103,7 @@ export class ResponseStatusController {
       const status = result.rows[0];
 
       if (!status)
-        throw new NotFoundException(
-          `Update resp ststus whith id = ${id} unavailable`,
-        );
+        throw new NotFoundException(`Response status with id ${id} not found`);
 
       return status;
     } catch (error: unknown) {
@@ -122,20 +120,32 @@ export class ResponseStatusController {
   async deleteResponseStatus(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ResponseStatusModel> {
-    const result = await this.dbService.query<ResponseStatusModel>(
-      `DELETE FROM response_statuses
-            WHERE id = $1
-            RETURNING id, name
-            `,
-      [id],
-    );
+    try {
+      const result = await this.dbService.query<ResponseStatusModel>(
+        `DELETE FROM response_statuses
+              WHERE id = $1
+              RETURNING id, name
+              `,
+        [id],
+      );
 
-    const status = result.rows[0];
+      const status = result.rows[0];
 
-    if (!status) {
-      throw new NotFoundException(`Problem status with id = ${id} not found`);
+      if (!status) {
+        throw new NotFoundException(
+          `Response status with id = ${id} not found`,
+        );
+      }
+
+      return status;
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError && error.code === '23503') {
+        throw new ConflictException(
+          `Response status with id ${id} cannot be deleted because it is used by violations`,
+        );
+      }
+
+      throw error;
     }
-
-    return status;
   }
 }

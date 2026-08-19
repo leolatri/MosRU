@@ -437,8 +437,26 @@ export class ViolationsService {
 
       return result.rows[0];
     } catch (error: unknown) {
-      if (error instanceof DatabaseError && error.code === '23505')
-        throw new ConflictException(`Violation already exist`);
+      if (error instanceof DatabaseError) {
+        if (error.code === '23505') {
+          throw new ConflictException(
+            'Violation with this source message ID or application number already exists',
+          );
+        }
+
+        if (error.code === '23503') {
+          throw new BadRequestException(
+            'District, response status or category-topic relation does not exist',
+          );
+        }
+
+        if (error.code === '23514') {
+          throw new BadRequestException(
+            'Response deadline cannot be earlier than publication date',
+          );
+        }
+      }
+
       throw error;
     }
   }

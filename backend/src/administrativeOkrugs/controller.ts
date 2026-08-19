@@ -95,12 +95,14 @@ export class AdmOkrugsController {
       const okrug = result.rows[0];
 
       if (!okrug)
-        throw new NotFoundException(`Cannot update adm okrug whith id = ${id}`);
+        throw new NotFoundException(
+          `Administrative okrug with id ${id} not found`,
+        );
 
       return okrug;
     } catch (error: unknown) {
       if (error instanceof DatabaseError && error.code === '23505') {
-        throw new ConflictException(`Adm okrug"${dto.code}" already exists`);
+        throw new ConflictException(`Adm okrug "${dto.code}" already exists`);
       }
       throw error;
     }
@@ -110,20 +112,30 @@ export class AdmOkrugsController {
   async deleteAdmOkrug(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<AdmOkrugsModel> {
-    const result = await this.dbService.query<AdmOkrugsModel>(
-      `DELETE FROM administrative_okrugs
-            WHERE id = $1
-            RETURNING id, code
-            `,
-      [id],
-    );
+    try {
+      const result = await this.dbService.query<AdmOkrugsModel>(
+        `DELETE FROM administrative_okrugs
+              WHERE id = $1
+              RETURNING id, code
+              `,
+        [id],
+      );
 
-    const okrug = result.rows[0];
+      const okrug = result.rows[0];
 
-    if (!okrug) {
-      throw new NotFoundException(`Adm okrug with id = ${id} not found`);
+      if (!okrug) {
+        throw new NotFoundException(`Adm okrug with id = ${id} not found`);
+      }
+
+      return okrug;
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError && error.code === '23503') {
+        throw new ConflictException(
+          `Administrative okrug with id ${id} cannot be deleted because it contains districts`,
+        );
+      }
+
+      throw error;
     }
-
-    return okrug;
   }
 }

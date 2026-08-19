@@ -156,8 +156,8 @@ export class CategoryProblemTopicController {
       return relation;
     } catch (error: unknown) {
       if (error instanceof DatabaseError && error.code === '23503') {
-        throw new BadRequestException(
-          'Object category or problem topic does not exist',
+        throw new ConflictException(
+          'This category-topic relation cannot be deleted because it is used by violations',
         );
       }
       throw error;

@@ -99,9 +99,7 @@ export class ObjCategoriesController {
       const object = result.rows[0];
 
       if (!object)
-        throw new NotFoundException(
-          `Cannot update object category whith id = ${id}`,
-        );
+        throw new NotFoundException(`Object category with id ${id} not found`);
 
       return object;
     } catch (error: unknown) {
@@ -118,20 +116,32 @@ export class ObjCategoriesController {
   async deleteObjectCategories(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ObjCategoriesModel> {
-    const result = await this.dbService.query<ObjCategoriesModel>(
-      `DELETE FROM object_categories
-            WHERE id = $1
-            RETURNING id, name
-            `,
-      [id],
-    );
+    try {
+      const result = await this.dbService.query<ObjCategoriesModel>(
+        `DELETE FROM object_categories
+              WHERE id = $1
+              RETURNING id, name
+              `,
+        [id],
+      );
 
-    const object = result.rows[0];
+      const object = result.rows[0];
 
-    if (!object) {
-      throw new NotFoundException(`Object category with id = ${id} not found`);
+      if (!object) {
+        throw new NotFoundException(
+          `Object category with id = ${id} not found`,
+        );
+      }
+
+      return object;
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError && error.code === '23503') {
+        throw new ConflictException(
+          `Object category with id ${id} cannot be deleted because it is used by problem topics or violations`,
+        );
+      }
+
+      throw error;
     }
-
-    return object;
   }
 }

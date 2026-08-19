@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { XlsxParserService } from './parser';
 import { DatabaseService } from '../database/service';
 import { ImportResult, NormalizedViolationRow } from './models';
-import { PoolClient, QueryResultRow } from 'pg';
+import { DatabaseError, PoolClient, QueryResultRow } from 'pg';
 
 interface IdRow extends QueryResultRow {
   id: number;
@@ -244,103 +248,121 @@ export class ImportsService {
     const filename = this.decodeFilename(file.originalname);
     const rows = await this.parser.parseAndValidate(file);
 
-    return this.database.withTransaction(async (client) => {
-      let created = 0;
-      let updated = 0;
+    try {
+      return await this.database.withTransaction(async (client) => {
+        let created = 0;
+        let updated = 0;
 
-      const objectCategoryIds = new Map<string, number>();
-      const problemTopicIds = new Map<string, number>();
-      const responseStatusIds = new Map<string, number>();
-      const administrativeOkrugIds = new Map<string, number>();
-      const districtIds = new Map<string, number>();
+        const objectCategoryIds = new Map<string, number>();
+        const problemTopicIds = new Map<string, number>();
+        const responseStatusIds = new Map<string, number>();
+        const administrativeOkrugIds = new Map<string, number>();
+        const districtIds = new Map<string, number>();
 
-      const categoryProblemTopics = new Set<string>();
+        const categoryProblemTopics = new Set<string>();
 
-      const sourceMessageIds = rows.map((row) => row.sourceMessageId);
+        const sourceMessageIds = rows.map((row) => row.sourceMessageId);
 
-      const existingResult = await client.query<ExistingViolationRow>(
-        `
+        const existingResult = await client.query<ExistingViolationRow>(
+          `
                 SELECT source_message_id AS "sourceMessageId"
                 FROM violations
                 WHERE source_message_id = ANY($1::bigint[])
                 `,
-        [sourceMessageIds],
-      );
-
-      const existingSourceMessageIds = new Set(
-        existingResult.rows.map((row) => row.sourceMessageId),
-      );
-
-      for (const row of rows) {
-        const objectCategoryId = await this.getOrCreateObjectCategoryId(
-          client,
-          row.objectCategoryName,
-          objectCategoryIds,
-        );
-        const problemTopicId = await this.getOrCreateProblemTopicId(
-          client,
-          row.problemTopicName,
-          problemTopicIds,
+          [sourceMessageIds],
         );
 
-        await this.upsertCategoryProblemTopic(
-          client,
-          objectCategoryId,
-          problemTopicId,
-          categoryProblemTopics,
+        const existingSourceMessageIds = new Set(
+          existingResult.rows.map((row) => row.sourceMessageId),
         );
 
-        const responseStatusId = await this.getOrCreateResponseStatusId(
-          client,
-          row.responseStatusName,
-          responseStatusIds,
-        );
-
-        let districtId: number | null = null;
-
-        if (row.administrativeOkrug !== null && row.district !== null) {
-          const okrugCode = row.administrativeOkrug;
-
-          const okrugId = await this.getOrCreateAdministrativeOkrugId(
+        for (const row of rows) {
+          const objectCategoryId = await this.getOrCreateObjectCategoryId(
             client,
-            okrugCode,
-            administrativeOkrugIds,
+            row.objectCategoryName,
+            objectCategoryIds,
+          );
+          const problemTopicId = await this.getOrCreateProblemTopicId(
+            client,
+            row.problemTopicName,
+            problemTopicIds,
           );
 
-          districtId = await this.getOrCreateDistrictId(
+          await this.upsertCategoryProblemTopic(
             client,
-            row.district,
-            okrugId,
-            districtIds,
+            objectCategoryId,
+            problemTopicId,
+            categoryProblemTopics,
+          );
+
+          const responseStatusId = await this.getOrCreateResponseStatusId(
+            client,
+            row.responseStatusName,
+            responseStatusIds,
+          );
+
+          let districtId: number | null = null;
+
+          if (row.administrativeOkrug !== null && row.district !== null) {
+            const okrugCode = row.administrativeOkrug;
+
+            const okrugId = await this.getOrCreateAdministrativeOkrugId(
+              client,
+              okrugCode,
+              administrativeOkrugIds,
+            );
+
+            districtId = await this.getOrCreateDistrictId(
+              client,
+              row.district,
+              okrugId,
+              districtIds,
+            );
+          }
+
+          const wasExisting = existingSourceMessageIds.has(row.sourceMessageId);
+
+          await this.upsertViolation(
+            client,
+            row,
+            districtId,
+            objectCategoryId,
+            problemTopicId,
+            responseStatusId,
+          );
+
+          if (wasExisting) {
+            updated += 1;
+          } else {
+            created += 1;
+            existingSourceMessageIds.add(row.sourceMessageId);
+          }
+        }
+
+        return {
+          filename,
+          total: rows.length,
+          created,
+          updated,
+          message: 'XLSX import completed successfully',
+        };
+      });
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError) {
+        if (error.code === '23505') {
+          throw new ConflictException(
+            'XLSX data conflicts with an existing source message ID or application number',
           );
         }
 
-        const wasExisting = existingSourceMessageIds.has(row.sourceMessageId);
-
-        await this.upsertViolation(
-          client,
-          row,
-          districtId,
-          objectCategoryId,
-          problemTopicId,
-          responseStatusId,
-        );
-
-        if (wasExisting) {
-          updated += 1;
-        } else {
-          created += 1;
-          existingSourceMessageIds.add(row.sourceMessageId);
+        if (error.code === '23503' || error.code === '23514') {
+          throw new BadRequestException(
+            'XLSX data violates database relations or constraints',
+          );
         }
       }
 
-      return {
-        filename,
-        total: rows.length,
-        created,
-        updated,
-        message: 'XLSX import completed successfully',
-      };
-    });
+      throw error;
+    }
   }
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -29,7 +30,7 @@ export class DistrictsController {
   @Get()
   async getAll(): Promise<DistrictModel[]> {
     const result = await this.dbService.query<DistrictModel>(
-      `SELECT id, okrug_id AS okrugId, name
+      `SELECT id, okrug_id AS "okrugId", name
             FROM districts
             ORDER BY id
             `,
@@ -43,7 +44,7 @@ export class DistrictsController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<DistrictModel> {
     const result = await this.dbService.query<DistrictModel>(
-      `SELECT id, okrug_id AS okrugId, name
+      `SELECT id, okrug_id AS "okrugId", name
             FROM districts
             WHERE id = $1
             `,
@@ -64,17 +65,25 @@ export class DistrictsController {
       const result = await this.dbService.query<DistrictModel>(
         `INSERT INTO districts (name, okrug_id)
                 VALUES ($1, $2)
-                RETURNING id, okrug_id, name
+                RETURNING id, okrug_id AS "okrugId", name
                 `,
         [dto.name, dto.okrugId],
       );
 
       return result.rows[0];
     } catch (error: unknown) {
-      if (error instanceof DatabaseError && error.code === '23505')
+      if (error instanceof DatabaseError && error.code === '23505') {
         throw new ConflictException(
-          `District with name = ${dto.name} is alrady exist`,
+          `District "${dto.name}" already exists in this administrative okrug`,
         );
+      }
+
+      if (error instanceof DatabaseError && error.code === '23503') {
+        throw new BadRequestException(
+          `Administrative okrug with id ${dto.okrugId} does not exist`,
+        );
+      }
+
       throw error;
     }
   }
@@ -92,7 +101,7 @@ export class DistrictsController {
                     okrug_id = $2,
                     updated_at = NOW()
                 WHERE id = $3
-                RETURNING id, okrug_id AS okrugId, name
+                RETURNING id, okrug_id AS "okrugId", name
                 `,
         [dto.name, dto.okrugId, id],
       );
@@ -104,10 +113,18 @@ export class DistrictsController {
 
       return result.rows[0];
     } catch (error: unknown) {
-      if (error instanceof DatabaseError && error.code === '23505')
+      if (error instanceof DatabaseError && error.code === '23505') {
         throw new ConflictException(
-          `District with name = ${dto.name} is alrady exist`,
+          `District "${dto.name}" already exists in this administrative okrug`,
         );
+      }
+
+      if (error instanceof DatabaseError && error.code === '23503') {
+        throw new BadRequestException(
+          `Administrative okrug with id ${dto.okrugId} does not exist`,
+        );
+      }
+
       throw error;
     }
   }
@@ -116,19 +133,29 @@ export class DistrictsController {
   async deleteDistrict(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<DistrictModel> {
-    const result = await this.dbService.query<DistrictModel>(
-      `DELETE FROM districts
-            WHERE id = $1
-            RETURNING id, okrug_id AS okrugId, name
-            `,
-      [id],
-    );
+    try {
+      const result = await this.dbService.query<DistrictModel>(
+        `DELETE FROM districts
+              WHERE id = $1
+              RETURNING id, okrug_id AS "okrugId", name
+              `,
+        [id],
+      );
 
-    const district = result.rows[0];
+      const district = result.rows[0];
 
-    if (!district)
-      throw new NotFoundException(`District with id = ${id} not found`);
+      if (!district)
+        throw new NotFoundException(`District with id = ${id} not found`);
 
-    return district;
+      return district;
+    } catch (error: unknown) {
+      if (error instanceof DatabaseError && error.code === '23503') {
+        throw new ConflictException(
+          `District with id ${id} cannot be deleted because it is used by violations`,
+        );
+      }
+
+      throw error;
+    }
   }
 }
