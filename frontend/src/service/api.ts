@@ -1,4 +1,4 @@
-import type { AuthModel, DistrictReference, ImportResult, ImportRowError, LoginResponce, NamedReference, PaginatedViolations, RegistrationResponse, ViolationFilterOptions, ViolationsQuery } from "../models/models";
+import type { AuthModel, DashboardResponse, DistrictReference, ImportResult, ImportRowError, LoginResponce, NamedReference, PaginatedViolations, RegistrationResponse, ViolationFilterOptions, ViolationFilterValues, ViolationsQuery } from "../models/models";
 
 export const ACCESS_TOKEN_KEY = 'accessToken';
 
@@ -33,7 +33,7 @@ async function createApiError(responce: Response): Promise<ApiError> {
     const message = Array.isArray(responseMessage) ? responseMessage.join('; ') : responseMessage ?? `Ошибка HTTP ${responce.status}`;
 
     return new ApiError(responce.status, body, message);
-}
+};
 
 async function request(path: string, options: RequestInit = {}): Promise<Response> {
     const resp = await fetch(`/api${path}`, options);
@@ -43,19 +43,19 @@ async function request(path: string, options: RequestInit = {}): Promise<Respons
         throw apiErr
     }
     return resp;
-}
+};
 
 export function saveAccessToken(token: string,): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
-}
+};
 
 export function removeAccessToken(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-}
+};
 
 export function hasAccessToken(): boolean {
     return localStorage.getItem(ACCESS_TOKEN_KEY) !== null;
-}
+};
 
 export async function authorization(credentials: AuthModel): Promise<LoginResponce> {
     const resp = await request('/auth/login', {
@@ -79,7 +79,7 @@ export async function registration(credentials: AuthModel): Promise<Registration
     });
 
     return resp.json() as Promise<RegistrationResponse>;
-}
+};
 
 async function requestWithAuth(path: string, options: RequestInit = {}): Promise<Response> {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -94,12 +94,12 @@ async function requestWithAuth(path: string, options: RequestInit = {}): Promise
         ...options,
         headers,
     });
-}
+};
 
 async function getWithAuth<T>(path: string, signal?: AbortSignal): Promise<T> {
     const responce = await requestWithAuth(path, { signal });
     return responce.json() as Promise<T>;
-}
+};
 
 export async function getViolationFilterOptions(signal?: AbortSignal): Promise<ViolationFilterOptions> {
     const [districts, objectCategories, problemTopics, responseStatuses] = await Promise.all([
@@ -127,9 +127,9 @@ export async function getViolationFilterOptions(signal?: AbortSignal): Promise<V
         problemTopics,
         responseStatuses,
     };
-}
+};
 
-function createSearchParams(query: ViolationsQuery, includePagination = true): URLSearchParams {
+function createSearchParams(query: ViolationsQuery | ViolationFilterValues, includePagination = true): URLSearchParams {
     const serchParams = new URLSearchParams();
 
     for (const [key, value] of Object.entries(query)) {
@@ -139,7 +139,7 @@ function createSearchParams(query: ViolationsQuery, includePagination = true): U
     }
 
     return serchParams;
-}
+};
 
 export async function getViolations(
     query: ViolationsQuery,
@@ -150,7 +150,17 @@ export async function getViolations(
     const response = await requestWithAuth(`/violations?${searchParams.toString()}`, { signal });
 
     return response.json() as Promise<PaginatedViolations>;
-}
+};
+
+export async function getDashboard(
+    filters: ViolationFilterValues,
+    signal?: AbortSignal
+): Promise<DashboardResponse> {
+    const serchParam = createSearchParams(filters);
+
+    const responce = await requestWithAuth(`/dashboard${serchParam.toString()}`, {signal});
+    return responce.json() as Promise<DashboardResponse>;
+};
 
 export async function importViolationsXlsx(file: File): Promise<ImportResult> {
     const formData = new FormData();
@@ -163,7 +173,7 @@ export async function importViolationsXlsx(file: File): Promise<ImportResult> {
     });
 
     return response.json() as Promise<ImportResult>;
-}
+};
 
 export async function exportViolationsXlsx(query: ViolationsQuery): Promise<void> {
     const searchParams = createSearchParams(query, false);
@@ -183,4 +193,4 @@ export async function exportViolationsXlsx(query: ViolationsQuery): Promise<void
     link.remove();
 
     URL.revokeObjectURL(downloadUrl);
-}
+};

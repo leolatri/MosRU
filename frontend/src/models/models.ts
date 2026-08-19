@@ -112,3 +112,28 @@ export interface ViolationFilterValues {
     problemTopicId?: number;
     responseStatusId?: number;
 }
+
+
+export interface DashboardChartItem {
+    id: string;
+    label: string;
+    value: number;
+}
+
+export interface DashboardCategoryItem {
+    category: string;
+    count: number;
+}
+
+export interface DashboardMonthItem {
+    month: string;
+    count: number;
+}
+
+export interface DashboardResponse {
+    summary: {total: number};
+    byStatus: DashboardChartItem[];
+    byCategory: DashboardCategoryItem[];
+    byMonth: DashboardMonthItem[];
+    districtCompleteness: DashboardChartItem[];
+}
