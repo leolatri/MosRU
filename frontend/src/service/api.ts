@@ -1,4 +1,4 @@
-import type { AuthModel, ImportResult, ImportRowError, LoginResponce, PaginatedViolations, RegistrationResponse, ViolationsQuery } from "../models/models";
+import type { AuthModel, DistrictReference, ImportResult, ImportRowError, LoginResponce, NamedReference, PaginatedViolations, RegistrationResponse, ViolationFilterOptions, ViolationsQuery } from "../models/models";
 
 export const ACCESS_TOKEN_KEY = 'accessToken';
 
@@ -90,17 +90,44 @@ async function requestWithAuth(path: string, options: RequestInit = {}): Promise
 
     headers.set('Authorization', `Bearer ${token}`);
 
-    const response = await fetch(`/api${path}`, {
+    return request(path, {
         ...options,
         headers,
     });
-
-    if (!response.ok) throw createApiError(response);
-
-    return response;
 }
 
+async function getWithAuth<T>(path: string, signal?: AbortSignal): Promise<T> {
+    const responce = await requestWithAuth(path, { signal });
+    return responce.json() as Promise<T>;
+}
 
+export async function getViolationFilterOptions(signal?: AbortSignal): Promise<ViolationFilterOptions> {
+    const [districts, objectCategories, problemTopics, responseStatuses] = await Promise.all([
+        getWithAuth<DistrictReference[]>(
+            '/districts',
+            signal,
+        ),
+        getWithAuth<NamedReference[]>(
+            '/object-categories',
+            signal,
+        ),
+        getWithAuth<NamedReference[]>(
+            '/problem-topics',
+            signal,
+        ),
+        getWithAuth<NamedReference[]>(
+            '/response-statuses',
+            signal,
+        ),
+    ]);
+
+    return {
+        districts,
+        objectCategories,
+        problemTopics,
+        responseStatuses,
+    };
+}
 
 function createSearchParams(query: ViolationsQuery, includePagination = true): URLSearchParams {
     const serchParams = new URLSearchParams();

@@ -6,12 +6,15 @@ import {
     DownloadOutlined,
     UploadOutlined,
 } from '@ant-design/icons';
-import type { ViolationModel } from "../../models/models";
+import type { ViolationFilterValues, ViolationModel } from "../../models/models";
 import { columns } from "./columns";
 import st from './style.module.scss';
+import useFilters from "../../hooks/useFilters";
+import Filters from "./Filters";
 
 const Violations = () => {
     const { violations, meta, query, loading, error, setQuery, refetch } = useViolations();
+    const { options, loading: loadFilters, errors: errorsFilters } = useFilters();
     const [imported, setImport] = useState(false);
     const [exported, setExport] = useState(false);
 
@@ -41,6 +44,27 @@ const Violations = () => {
         } finally {
             setExport(false);
         }
+    };
+
+    const handleApply = (values: ViolationFilterValues) => {
+        setQuery((curr) => ({
+            ...curr,
+            page: 1,
+            search: values.search?.trim() || undefined,
+            districtId: values.districtId,
+            objectCategoryId: values.objectCategoryId,
+            problemTopicId: values.problemTopicId,
+            responseStatusId: values.responseStatusId
+        }));
+    };
+
+    const handleReset = () => {
+        setQuery((curr) => ({
+            page: 1,
+            limit: curr.limit,
+            sortBy: curr.sortBy,
+            sortOrder: curr.sortOrder,
+        }));
     };
 
     return (
@@ -73,7 +97,19 @@ const Violations = () => {
                     Экспорт XLSX
                 </Button>
             </div>
-
+            <Filters
+                options={options}
+                optionsLoading={loadFilters}
+                initialValues={{
+                    search: query.search,
+                    districtId: query.districtId,
+                    objectCategoryId: query.objectCategoryId,
+                    problemTopicId: query.problemTopicId,
+                    responseStatusId: query.responseStatusId,
+                }}
+                onApply={handleApply}
+                onReset={handleReset}
+            />
             {error && (
                 <Alert
                     type="error"
@@ -82,7 +118,14 @@ const Violations = () => {
                     showIcon
                 />
             )}
-
+            {error && (
+                <Alert
+                    type="error"
+                    title="Ошибка загрузки фильтров"
+                    description={errorsFilters}
+                    showIcon
+                />
+            )}
             <div className={st.violations__table}>
                 <Table<ViolationModel>
                     rowKey="id"

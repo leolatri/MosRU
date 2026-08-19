@@ -88,3 +88,27 @@ export interface RegistrationResponse {
     id: string;
     email: string;
 }
+
+export interface NamedReference {
+    id: number;
+    name: string;
+}
+
+export interface DistrictReference extends NamedReference {
+    okrugId: number;
+}
+
+export interface ViolationFilterOptions {
+    districts: DistrictReference[];
+    objectCategories: NamedReference[];
+    problemTopics: NamedReference[];
+    responseStatuses: NamedReference[];
+}
+
+export interface ViolationFilterValues {
+    search?: string;
+    districtId?: number;
+    objectCategoryId?: number;
+    problemTopicId?: number;
+    responseStatusId?: number;
+}
