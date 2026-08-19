@@ -13,14 +13,19 @@ import {
   IsIn,
   Max,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+interface TransformValueParams {
+  value: unknown;
+}
 
 export class ResponseStatusDTO {
   @ApiProperty({
     description: 'Название статуса подготовки ответа',
     example: 'Опубликован',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformValueParams) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   name!: string;
@@ -31,7 +36,9 @@ export class ProblemTopicDTO {
     description: 'Название проблемной темы',
     example: 'Засор трубы',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformValueParams) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   name!: string;
@@ -42,7 +49,9 @@ export class ObjCategoriesDTO {
     description: 'Категория объекта',
     example: 'Многоквартирные дома',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformValueParams) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   name!: string;
@@ -53,7 +62,9 @@ export class DistrictsDTO {
     description: 'Район',
     example: 'Таганский',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformValueParams) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   name!: string;
@@ -73,7 +84,9 @@ export class AdmOkrugsDTO {
     description: 'Код округа',
     example: 'ЦАО',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformValueParams) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   code!: string;
@@ -141,7 +154,9 @@ export class ViolationDTO {
     description: 'Название или адрес объекта',
     example: 'г. Москва, улица Тверская, дом 10',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: TransformValueParams) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   objectName!: string;
@@ -241,7 +256,7 @@ export class UserDTO {
     description: 'Почта',
     example: 'ex@gmail.com',
   })
-  @Transform(({ value }) =>
+  @Transform(({ value }: TransformValueParams) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsEmail()

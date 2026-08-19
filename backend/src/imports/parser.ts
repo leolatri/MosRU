@@ -53,13 +53,17 @@ export class XlsxParserService {
       const fileStream = Readable.from([file.buffer]);
       await workbook.xlsx.read(fileStream);
     } catch {
-      throw new BadRequestException('The uploaded file is not a valid XLSX file');
+      throw new BadRequestException(
+        'The uploaded file is not a valid XLSX file',
+      );
     }
 
     const worksheet = workbook.worksheets[0];
 
     if (!worksheet) {
-      throw new BadRequestException('The XLSX file does not contain worksheets');
+      throw new BadRequestException(
+        'The XLSX file does not contain worksheets',
+      );
     }
 
     this.validateHeaders(worksheet);
@@ -317,7 +321,9 @@ export class XlsxParserService {
         rowErrors.push({
           row: rawRow.row,
           field: 'responseDeadline',
-          message: 'Срок ответа должен иметь формат ДД.ММ.ГГГГ и быть существующей датой'});
+          message:
+            'Срок ответа должен иметь формат ДД.ММ.ГГГГ и быть существующей датой',
+        });
       }
 
       if (

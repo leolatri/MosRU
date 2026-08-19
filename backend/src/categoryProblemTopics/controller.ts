@@ -8,7 +8,6 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
 } from '@nestjs/common';
 import { DatabaseError, QueryResultRow } from 'pg';

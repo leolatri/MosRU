@@ -6,60 +6,58 @@ import { ViolationQueryDTO } from '../dto/dtoModels';
 import { buildViolationQuery } from '../violations/queryBuilder';
 
 interface TotalRow extends QueryResultRow {
-    total: number;
+  total: number;
 }
 
-export interface DashboardChartItem
-    extends QueryResultRow {
-    id: string;
-    label: string;
-    value: number;
+export interface DashboardChartItem extends QueryResultRow {
+  id: string;
+  label: string;
+  value: number;
 }
 
-export interface DashboardCategoryItem
-    extends QueryResultRow {
-    category: string;
-    count: number;
+export interface DashboardCategoryItem extends QueryResultRow {
+  category: string;
+  count: number;
 }
 
-export interface DashboardMonthItem
-    extends QueryResultRow {
-    month: string;
-    count: number;
+export interface DashboardMonthItem extends QueryResultRow {
+  month: string;
+  count: number;
 }
 
 export interface DashboardResponse {
-    summary: {total: number};
-    byStatus: DashboardChartItem[];
-    byCategory: DashboardCategoryItem[];
-    byMonth: DashboardMonthItem[];
-    districtCompleteness: DashboardChartItem[];
+  summary: { total: number };
+  byStatus: DashboardChartItem[];
+  byCategory: DashboardCategoryItem[];
+  byMonth: DashboardMonthItem[];
+  districtCompleteness: DashboardChartItem[];
 }
 
 @Injectable()
 export class DashboardService {
-    constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
-    async getDashboard(query: ViolationQueryDTO): Promise<DashboardResponse> {
-        const queryParts = buildViolationQuery(query);
+  async getDashboard(query: ViolationQueryDTO): Promise<DashboardResponse> {
+    const queryParts = buildViolationQuery(query);
 
-        const [
-            totalResult,
-            statusResult,
-            categoryResult,
-            monthResult,
-            districtCompletenessResult,
-        ] = await Promise.all([
-            this.databaseService.query<TotalRow>(
-                `
+    const [
+      totalResult,
+      statusResult,
+      categoryResult,
+      monthResult,
+      districtCompletenessResult,
+    ] = await Promise.all([
+      this.databaseService.query<TotalRow>(
+        `
                 SELECT COUNT(*)::integer AS total
                 FROM violations v
                 ${queryParts.whereSql}
-                `, queryParts.values,
-            ),
+                `,
+        queryParts.values,
+      ),
 
-            this.databaseService.query<DashboardChartItem>(
-                `
+      this.databaseService.query<DashboardChartItem>(
+        `
                 SELECT
                     rs.id::text AS id,
                     rs.name AS label,
@@ -74,11 +72,12 @@ export class DashboardService {
                 ORDER BY
                     value DESC,
                     rs.name ASC
-                `, queryParts.values,
-            ),
+                `,
+        queryParts.values,
+      ),
 
-            this.databaseService.query<DashboardCategoryItem>(
-                `
+      this.databaseService.query<DashboardCategoryItem>(
+        `
                 SELECT
                     oc.name AS category,
                     COUNT(*)::integer AS count
@@ -93,11 +92,12 @@ export class DashboardService {
                     count DESC,
                     oc.name ASC
                 LIMIT 10
-                `, queryParts.values
-            ),
+                `,
+        queryParts.values,
+      ),
 
-            this.databaseService.query<DashboardMonthItem>(
-                `
+      this.databaseService.query<DashboardMonthItem>(
+        `
                 SELECT
                 TO_CHAR(
                     DATE_TRUNC(
@@ -120,11 +120,11 @@ export class DashboardService {
                         v.publication_date
                     ) ASC
              `,
-                queryParts.values,
-            ),
+        queryParts.values,
+      ),
 
-            this.databaseService.query<DashboardChartItem>(
-                `
+      this.databaseService.query<DashboardChartItem>(
+        `
                 SELECT
                     CASE
                     WHEN v.district_id IS NULL
@@ -143,16 +143,17 @@ export class DashboardService {
                 ${queryParts.whereSql}
                 GROUP BY 1, 2
                 ORDER BY value DESC
-            `, queryParts.values
-            ),
-        ]);
+            `,
+        queryParts.values,
+      ),
+    ]);
 
-        return {
-            summary: {total: totalResult.rows[0]?.total ?? 0},
-            byStatus: statusResult.rows,
-            byCategory: categoryResult.rows,
-            byMonth: monthResult.rows,
-            districtCompleteness: districtCompletenessResult.rows,
-        };
-    }
+    return {
+      summary: { total: totalResult.rows[0]?.total ?? 0 },
+      byStatus: statusResult.rows,
+      byCategory: categoryResult.rows,
+      byMonth: monthResult.rows,
+      districtCompleteness: districtCompletenessResult.rows,
+    };
+  }
 }

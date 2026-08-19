@@ -2,7 +2,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  OnModuleDestroy,
   UnauthorizedException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/service';

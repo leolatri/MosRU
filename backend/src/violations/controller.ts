@@ -13,15 +13,21 @@ import {
 } from '@nestjs/common';
 import { ViolationDTO, ViolationQueryDTO } from '../dto/dtoModels';
 import { ViolationsService } from './service';
-import { ApiBearerAuth, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiProduces,
+  ApiTags,
+} from '@nestjs/swagger';
 
-const XLSX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const XLSX_MIME_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 @ApiTags('Violations')
 @ApiBearerAuth()
 @Controller('violations')
 export class ViolationsController {
-  constructor(private readonly violationService: ViolationsService) { }
+  constructor(private readonly violationService: ViolationsService) {}
 
   @Get()
   getAll(@Query() query: ViolationQueryDTO) {
@@ -31,8 +37,7 @@ export class ViolationsController {
   @Get('export/xlsx')
   @ApiProduces(XLSX_MIME_TYPE)
   @ApiOkResponse({
-    description:
-      'XLSX file containing filtered violations',
+    description: 'XLSX file containing filtered violations',
     content: {
       [XLSX_MIME_TYPE]: {
         schema: {
@@ -43,10 +48,7 @@ export class ViolationsController {
     },
   })
   @Header('Content-Type', XLSX_MIME_TYPE)
-  @Header(
-    'Content-Disposition',
-    'attachment; filename="violations.xlsx"',
-  )
+  @Header('Content-Disposition', 'attachment; filename="violations.xlsx"')
   async exportXlsx(@Query() query: ViolationQueryDTO): Promise<StreamableFile> {
     const buffer = await this.violationService.exportXlsx(query);
 

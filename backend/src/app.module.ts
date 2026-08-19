@@ -23,7 +23,7 @@ import { DashboardModule } from './dashboard/module';
     ViolationModule,
     AuthModule,
     ImportsModule,
-    DashboardModule
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
