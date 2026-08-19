@@ -1,41 +1,19 @@
-import { Card, Typography } from "antd";
+import { Alert, Card, Spin, Typography } from "antd";
 import st from './style.module.scss';
 import AuthForm from "../../components/form/AuthForm";
-import type { FieldProps } from "../../models/models";
+import type { AuthModel, FieldProps } from "../../models/models";
+import { useNavigate } from "react-router";
+import { useState } from "react";
+import { registration } from "../../service/api";
 
 const Registration = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
     const fields: FieldProps[] = [
         {
-            label: 'Фамилия',
-            placeholder: 'Введите фамилию',
-            private: false,
-            rules:
-                [
-                    { required: true, message: 'Введите фамилию' },
-                    {type:'string', message: 'Допустимы только буквы'}
-                ],
-        },
-        {
-            label: 'Имя',
-            placeholder: 'Введите имя',
-            private: false,
-            rules:
-                [
-                    { required: true, message: 'Введите имя' },
-                    {type:'string', message: 'Допустимы только буквы'}
-                ],
-        },
-        {
-            label: 'Отчество',
-            placeholder: 'Введите отчество',
-            private: false,
-            rules:
-                [
-                    { required: true, message: 'Введите отчество' },
-                    {type:'string', message: 'Допустимы только буквы'}
-                ],
-        },
-        {
+            name: 'email',
             label: 'Почта',
             placeholder: 'Введите почту',
             private: false,
@@ -46,9 +24,10 @@ const Registration = () => {
                 ],
         },
         {
+            name: 'password',
             label: 'Пароль',
             placeholder: 'Введите пароль',
-            private: false,
+            private: true,
             rules:
                 [
                     { required: true, message: 'Введите пароль' },
@@ -56,16 +35,37 @@ const Registration = () => {
         },
     ];
 
+    const handleRegistr = async (values: AuthModel) => {
+        setLoading(true);
+        try {
+            await registration(values);
+            navigate('/login');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Не удалось зарегистрироваться";
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <div className={st.container}>
             <h1>РЕЕСТР | НАРУШЕНИЙ</h1>
             <Card className={st.container__card} title='Регистрация'>
+                {loading && <Spin spinning={loading}/>}
+                {error && (
+                    <Alert
+                        type="error"
+                        title={error}
+                        showIcon
+                    />
+                )}
                 <Typography.Text>
                     <AuthForm
                         fields={fields}
                         button={{
                             label: 'Зарегистрироваться',
-                            func: () => alert('Вход')
+                            func: handleRegistr
                         }}
                     />
                 </Typography.Text>

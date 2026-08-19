@@ -2,6 +2,7 @@ import type { Rule } from "antd/es/form";
 import type { valueType } from "antd/es/statistic/utils";
 
 export interface FieldProps {
+    name: keyof AuthModel,
     label: string,
     placeholder: string,
     rules?: Rule[];
@@ -72,4 +73,18 @@ export interface ImportRowError {
     row: number;
     field: string;
     message: string;
+}
+
+export interface AuthModel {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponce {
+    accessToken: string;
+}
+
+export interface RegistrationResponse {
+    id: string;
+    email: string;
 }

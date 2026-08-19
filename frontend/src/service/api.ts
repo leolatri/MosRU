@@ -1,4 +1,4 @@
-import type { ImportResult, ImportRowError, PaginatedViolations, ViolationsQuery } from "../models/models";
+import type { AuthModel, ImportResult, ImportRowError, LoginResponce, PaginatedViolations, RegistrationResponse, ViolationsQuery } from "../models/models";
 
 export const ACCESS_TOKEN_KEY = 'accessToken';
 
@@ -35,6 +35,52 @@ async function createApiError(responce: Response): Promise<ApiError> {
     return new ApiError(responce.status, body, message);
 }
 
+async function request(path: string, options: RequestInit = {}): Promise<Response> {
+    const resp = await fetch(`/api${path}`, options);
+
+    if (!resp.ok) {
+        const apiErr = await createApiError(resp);
+        throw apiErr
+    }
+    return resp;
+}
+
+export function saveAccessToken(token: string,): void {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function removeAccessToken(): void {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+export function hasAccessToken(): boolean {
+    return localStorage.getItem(ACCESS_TOKEN_KEY) !== null;
+}
+
+export async function authorization(credentials: AuthModel): Promise<LoginResponce> {
+    const resp = await request('/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials)
+    });
+
+    return resp.json() as Promise<LoginResponce>;
+};
+
+export async function registration(credentials: AuthModel): Promise<RegistrationResponse> {
+    const resp = await request('/auth/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(credentials)
+    });
+
+    return resp.json() as Promise<RegistrationResponse>;
+}
+
 async function requestWithAuth(path: string, options: RequestInit = {}): Promise<Response> {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY);
 
@@ -42,7 +88,7 @@ async function requestWithAuth(path: string, options: RequestInit = {}): Promise
 
     const headers = new Headers(options.headers);
 
-    headers.set('Authorization', `Bearer {token}`);
+    headers.set('Authorization', `Bearer ${token}`);
 
     const response = await fetch(`/api${path}`, {
         ...options,
@@ -53,6 +99,8 @@ async function requestWithAuth(path: string, options: RequestInit = {}): Promise
 
     return response;
 }
+
+
 
 function createSearchParams(query: ViolationsQuery, includePagination = true): URLSearchParams {
     const serchParams = new URLSearchParams();

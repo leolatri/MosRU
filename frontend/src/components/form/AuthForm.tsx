@@ -1,16 +1,23 @@
 import { Button, Form, Input } from 'antd';
-import type { FieldProps } from '../../models/models';
+import type { AuthModel, FieldProps } from '../../models/models';
 import st from './style.module.scss';
 
 interface ButtonProps {
     label: string;
-    func: () => void;
+    func: (
+        values: AuthModel,
+    ) => void | Promise<void>;
+}
+
+interface LinkProps {
+  label: string;
+  func: () => void;
 }
 
 interface AuthFormProps {
     fields: FieldProps[];
     button: ButtonProps;
-    link?: ButtonProps;
+    link?: LinkProps;
 }
 
 const AuthForm = ({
@@ -26,8 +33,8 @@ const AuthForm = ({
         >
             {fields.map((field) => (
                 <Form.Item
-                    key={field.label}
-                    name={field.label}
+                    key={field.name}
+                    name={field.name}
                     label={field.label}
                     rules={field.rules}
                 >
