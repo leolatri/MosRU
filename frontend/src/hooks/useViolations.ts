@@ -16,7 +16,7 @@ const defaultQuery: ViolationsQuery = {
     sortOrder: 'desc',
 };
 
-const useViolations = (initQuery: ViolationsQuery) => {
+const useViolations = (initQuery: ViolationsQuery = {}) => {
     const [query, setQuery] = useState<ViolationsQuery>(
         () => ({
             ...defaultQuery,
